@@ -1,0 +1,78 @@
+package com.mimvista.cloud.organizer.verifier.panels;
+
+import java.awt.Window;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.WindowEvent;
+
+import javax.swing.ButtonGroup;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+
+import com.mimvista.cloud.organizer.verifier.VerifierTask;
+import com.mimvista.cloud.organizer.verifier.proui.BoxUtil;
+
+public class VerifierFormatSelect extends JDialog {
+	
+	private static final long serialVersionUID = 1L;
+	
+	public static final int NONE = -1;
+	public static final int CSV = 0;
+	public static final int JSON = 1;
+
+	private JPanel content;
+
+	private ButtonGroup group = new ButtonGroup();
+
+	private JRadioButton csv = new JRadioButton("CSV");
+	private JRadioButton json = new JRadioButton("JSON");
+
+	private JButton cancel = new JButton(VerifierTask.props.getProperty("VERIFIER_CANCEL"));
+	private JButton select = new JButton(VerifierTask.props.getProperty("VERIFIER_SELECT"));
+
+	private ActionListener cancelAction = new ActionListener() {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			dispatchEvent(new WindowEvent(VerifierFormatSelect.this, WindowEvent.WINDOW_CLOSING));
+		}
+	};
+
+	private ActionListener selectAction = new ActionListener() {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			dispatchEvent(new WindowEvent(VerifierFormatSelect.this, WindowEvent.WINDOW_CLOSING));
+		}
+	};
+
+	public VerifierFormatSelect(Window window) {
+		super(window, "Output Format", ModalityType.APPLICATION_MODAL);
+		group.add(csv);
+		group.add(json);
+
+		cancel.addActionListener(cancelAction);
+		select.addActionListener(selectAction);
+
+		JPanel buttons = BoxUtil.horizontalBox();
+		BoxUtil.insert(cancel, buttons);
+		BoxUtil.addGlue(buttons);
+		BoxUtil.insert(select, buttons);
+
+		content = BoxUtil.verticalBox();
+		BoxUtil.insert(csv, content);
+		BoxUtil.insert(json, content);
+		BoxUtil.insert(buttons, content);
+
+		setContentPane(content);
+	}
+
+	public int getChoice() {
+		if (csv.isSelected())
+			return CSV;
+		else if (json.isSelected())
+			return JSON;
+		return NONE;
+	}
+
+}

@@ -1,0 +1,13 @@
+package com.mimvista.cloud.shared.common;
+
+public class S3SeriesURL {
+
+	public final String dicomURL;
+	public final String mobileURL;
+	
+	public S3SeriesURL(String dicomURL, String mobileURL){
+		this.dicomURL = dicomURL;
+		this.mobileURL = mobileURL;
+	}
+	
+}

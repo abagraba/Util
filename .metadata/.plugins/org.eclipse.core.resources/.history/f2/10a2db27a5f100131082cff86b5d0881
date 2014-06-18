@@ -1,0 +1,266 @@
+package com.mimvista.cloud.organizer.verifier.content;
+
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.regex.Pattern;
+
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+import javax.swing.border.EmptyBorder;
+
+import au.com.bytecode.opencsv.CSVReader;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+import com.lowagie.text.Font;
+import com.mimvista.cloud.CloudUtil;
+import com.mimvista.cloud.organizer.ui.VerifierUtil;
+import com.mimvista.cloud.organizer.verifier.proui.ComboEntry;
+import com.mimvista.cloud.organizer.verifier.proui.Navigable;
+import com.mimvista.cloud.organizer.verifier.proui.SwapPanel;
+import com.mimvista.mui.MIMFileDialog;
+
+public class VerifierCSVLoader extends JPanel implements Navigable {
+
+	private static Pattern validUID = Pattern.compile("[0-9]+(\\.[0-9]+)*");
+
+	private static final long serialVersionUID = 1L;
+	private static final int border = 100;
+
+	private static final int maxWarnings = 5;
+
+	private SwapPanel swapPanel;
+	private JButton back;
+	private JButton search;
+
+	private String file;
+	private JLabel filepath;
+	private JLabel error;
+
+	private JComboBox<ComboEntry<VerifierCSVEnum>> format;
+
+	private MIMFileDialog dialog;
+
+	private List<Set<String>> results;
+	private Set<String> invalid;
+	VerifierCSVEnum resultFormat;
+
+	private ActionListener openFileDialog = new ActionListener() {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			dialog = MIMFileDialog.get(SwingUtilities.getWindowAncestor(VerifierCSVLoader.this), "Open CSV File", MIMFileDialog.FileDialogType.OPEN);
+			dialog.addActionListener(fileSelected);
+			dialog.setVisible(true);
+		}
+	};
+
+	private ActionListener fileSelected = new ActionListener() {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			if (e.getID() == JFileChooser.APPROVE_OPTION) {
+				file = dialog.getSelectedPath();
+				filepath.setText(file);
+				try {
+					parseCSVFile();
+				}
+				catch (IOException e1) {
+					e1.printStackTrace();
+				}
+			}
+		}
+	};
+	
+	private ActionListener startSearch = new ActionListener() {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			if (file == null || results == null)
+				return;
+			Set<String> studyuids = null;
+			Set<String> seriesuids = null;
+			switch (resultFormat) {
+				case STUDY_UID:
+					studyuids = results.get(0);
+					break;
+				case SERIES_UID:
+					seriesuids = results.get(0);
+					break;
+				case BOTH:
+					studyuids = results.get(0);
+					seriesuids = results.get(1);
+					break;
+			}
+			VerifierCSVLoader.this.swapPanel.swapTo(new VerifierSearchProgress(VerifierCSVLoader.this.swapPanel, studyuids, seriesuids));
+		}
+	};
+	
+	private ActionListener formatChanged = new ActionListener() {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			try {
+				parseCSVFile();
+			}
+			catch (IOException e1) {
+				e1.printStackTrace();
+			}
+		}
+	};
+	
+	public VerifierCSVLoader(SwapPanel swapPanel) {
+		this.swapPanel = swapPanel;
+		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+		setBorder(new EmptyBorder(border, border, border, border));
+
+		JLabel csvtitle = new JLabel("Select CSV File");
+		csvtitle.setFont(csvtitle.getFont().deriveFont(Font.BOLD, 24));
+		JLabel formattitle = new JLabel("Select CSV Format");
+		formattitle.setFont(formattitle.getFont().deriveFont(Font.BOLD, 24));
+		
+		filepath = new JLabel();
+
+		format = new JComboBox<ComboEntry<VerifierCSVEnum>>();
+		ComboEntry.fillComboBox(format, "CSV Format", VerifierCSVEnum.values());
+		format.setMaximumSize(new Dimension(300, 20));
+
+		JButton open = new JButton("Open File");
+		back = new JButton("Back");
+		search = new JButton("Search");
+		error = new JLabel(" ");
+
+		format.addActionListener(formatChanged);
+		open.addActionListener(openFileDialog);
+		back.addActionListener(swapPanel.home);
+		search.addActionListener(startSearch);
+		
+		search.setEnabled(false);
+
+		
+		add(Box.createVerticalGlue());
+		VerifierUtil.insert(this, csvtitle);
+		add(Box.createVerticalStrut(25));
+		VerifierUtil.insert(this, open);
+		add(Box.createVerticalStrut(10));
+		VerifierUtil.insert(this, filepath);
+		add(Box.createVerticalStrut(25));
+		VerifierUtil.insert(this, formattitle);
+		add(Box.createVerticalStrut(25));
+		VerifierUtil.insert(this, format);
+		add(Box.createVerticalStrut(10));
+		VerifierUtil.insert(this, error);
+		add(Box.createVerticalGlue());
+
+	}
+
+	private static enum VerifierCSVEnum {
+		STUDY_UID("Study UID", 1), SERIES_UID("Series UID", 1), BOTH("Study UID, Series UID", 2);
+		public final String text;
+		public final int args;
+
+		private VerifierCSVEnum(String text, int args) {
+			this.text = text;
+			this.args = args;
+		}
+
+		public String toString() {
+			return text;
+		}
+	}
+
+	private void parseCSVFile() throws IOException {
+		error.setText(" ");
+		if (file == null)
+			return;
+		CSVReader csv;
+		try {
+			csv = new CSVReader(new FileReader(file));
+		}
+		catch (FileNotFoundException e) {
+			setError("Could not read file.");
+			throw e;
+		}
+		resultFormat = ((ComboEntry<VerifierCSVEnum>) format.getSelectedItem()).getEntry();
+
+		results = Lists.newArrayList();
+		invalid = Sets.newHashSet();
+		for (int i = 0; i < resultFormat.args; i++)
+			results.add(new HashSet<String>());
+		String[] result;
+		try {
+			while ((result = csv.readNext()) != null) {
+				if (result.length != resultFormat.args) {
+					setError("File does not match specified file format.");
+					csv.close();
+					return;
+				}
+				for (int i = 0; i < result.length; i++) {
+					result[i] = result[i].trim();
+					if (result[i].length() > 64 || !validUID.matcher(result[i]).matches())
+						invalid.add(result[i]);
+					String uid = CloudUtil.maskUID(result[i]);
+					results.get(i).add(uid);
+				}
+			}
+		}
+		catch (IOException e) {
+			setError("Could not read file...");
+			return;
+		}
+		if (invalid.size() != 0) {
+			String warning = "<html>Detected possible invalid UIDs:<br>";
+			int num = 0;
+			for (String uid : invalid) {
+				warning += uid + "<br>";
+				System.out.println("[" + uid + "]");
+				if (num++ == maxWarnings)
+					break;
+			}
+			if (invalid.size() != maxWarnings)
+				warning += invalid.size() - maxWarnings + " more UIDs.";
+			setWarning(warning);
+		}
+
+		search.setEnabled(true);
+		csv.close();
+	}
+
+	private void setWarning(String text) {
+		error.setForeground(Color.yellow);
+		error.setText(text);
+		search.setEnabled(true);
+	}
+
+	private void setError(String text) {
+		error.setForeground(Color.red);
+		error.setText(text);
+		search.setEnabled(false);
+	}
+
+	@Override
+	public int numButtons() {
+		return 2;
+	}
+
+	@Override
+	public JButton getButton(int i) {
+		switch (i) {
+			case 0:
+				return back;
+			case 1:
+				return search;
+		}
+		return null;
+	}
+}

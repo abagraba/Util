@@ -1,0 +1,213 @@
+package com.mimvista.cloud.server.groups;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.keyczar.Encrypter;
+import org.keyczar.exceptions.KeyczarException;
+
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import com.googlecode.objectify.Key;
+import com.mimvista.cloud.crypto.common.CryptKeeper;
+import com.mimvista.cloud.models.AuditedEvent;
+import com.mimvista.cloud.models.CloudAccount;
+import com.mimvista.cloud.models.CloudAccountRole;
+import com.mimvista.cloud.models.Membership;
+import com.mimvista.cloud.server.Halper;
+import com.mimvista.cloud.server.accounts.CloudAccountHalper;
+import com.mimvista.cloud.server.events.AuditedEventGenerator;
+import com.mimvista.cloud.server.users.UserHalper;
+import com.mimvista.cloud.shared.common.FoxExceptions;
+import com.mimvista.cloud.shared.common.FoxExceptions.InsufficientPermissionsException;
+import com.mimvista.cloud.shared.common.FoxExceptions.InvalidDecryptionPasswordException;
+import com.mimvista.cloud.shared.common.FoxUtil;
+import com.mimvista.cloud.shared.common.RoleInfo;
+import com.mimvista.cloud.shared.common.enums.AccountEnums.MembershipStatus;
+import com.mimvista.cloud.shared.common.enums.EventType;
+import com.mimvista.cloud.shared.forms.FormContext;
+import com.mimvista.cloud.shared.forms.FormValidationException;
+import com.mimvista.cloud.shared.validators.MembershipsValidationSchema;
+import com.mimvista.cloud.shared.validators.MembershipsValidationSchema.MembershipQuickie;
+
+public abstract class GroupMembershipPerformer extends AuditedEventGenerator{
+	protected UserHalper user;
+	protected GroupHalper group;
+	protected List<MembershipQuickie> quickies;
+	protected byte[] unencryptedGroupPass;
+	protected MembershipsValidationSchema vSchema;
+	
+	protected final Map<Key<CloudAccount>, Key<CloudAccountRole>> associatedRole = new HashMap<Key<CloudAccount>, Key<CloudAccountRole>>();
+	protected final List<CloudAccount> affectedUsers = new ArrayList<CloudAccount>();
+	protected String NO_ADMIN_MESSAGE = "Cannot remove all Administrators from a group!";
+	protected Map<Key<CloudAccount>, Membership> currentGroupAdminMemberships = Maps.newHashMap();
+
+	private FoxExceptions exception = null;
+	
+	public GroupMembershipPerformer(HttpServletRequest req, HttpServletResponse rsp, UserHalper user, GroupHalper group, FormContext formContext) throws InvalidDecryptionPasswordException, FormValidationException {
+		this(req, rsp, user, group);
+		vSchema = getValidationSchema(getValidRoleSet());
+		if (!vSchema.validate(formContext)) {
+			throw new FormValidationException(formContext);
+		}
+		quickies = vSchema.getQuickies();
+		unencryptedGroupPass = getUnencryptedGroupPass(user, group, vSchema);
+	}
+	
+	public GroupMembershipPerformer(HttpServletRequest req, HttpServletResponse rsp, UserHalper user, GroupHalper group) {
+		super(req, rsp);
+		this.user = user;
+		this.group = group;
+		loadGroupInfo();
+	}
+	
+	protected abstract MembershipsValidationSchema getValidationSchema(Set<RoleInfo> accountRoleSet);
+	
+	protected abstract void process() throws FoxExceptions;
+	protected abstract boolean ableTo();
+	protected abstract EventType getEventType();
+	
+	@Override
+	protected void perform() throws IOException {
+		try {
+			if (!ableTo()) {
+				throw new InsufficientPermissionsException();
+			}
+			process();
+		} catch(FoxExceptions e) {
+			//XXX See comment in rethrow() about this weirdness
+			exception = e;
+			return;
+		}
+		
+		if (FoxUtil.isNullOrEmpty(affectedUsers)) {
+			return;
+		}
+		
+		try {
+			for (CloudAccount user : affectedUsers) {
+				if (user.equals(group)) {
+					continue;
+				}
+				AuditedEvent event = AuditedEvent.build(getEventType(), user.getKey(), AuditedEvent.SUCCESSFUL_NOTE);
+				event.setAffectedUser(user.getKey());
+				event.setAssociatedGroup(group.getKey());
+				event.setAssociatedRole(associatedRole.get(user.getKey()));
+				logEvent(event);
+			}
+		} catch (Throwable t) {
+			t.printStackTrace();
+			System.err.println("Couldn't log group modification by " + user.getKey());
+		}
+	}
+	
+	//XXX This is pretty clunky, but had to move it in from GroupMembershipProcessor after merging it into this class
+	/** Since perform() only throws IOException, this method is a hack to throw any FoxExceptions hit during perform().
+	 *  Should always be called after perform() */
+	public void rethrow() throws FoxExceptions {
+		if (exception != null) {
+			throw exception;
+		}
+	}
+	
+	protected final byte[] encryptPassword(Halper<CloudAccount> memberHalper) throws InvalidDecryptionPasswordException {
+		return encryptPassword(memberHalper, unencryptedGroupPass);
+	}
+	
+	protected final byte[] encryptPassword(Halper<CloudAccount> memberHalper, byte[] myUnencryptedPass) throws InvalidDecryptionPasswordException {
+		byte[] encryptedPass;
+		try {
+			Encrypter encrypter = CryptKeeper.getEncrypter(memberHalper.getEntity().getAccountInfo());
+			encryptedPass = encrypter.encrypt(myUnencryptedPass);
+		} catch (KeyczarException e) {
+			throw new InvalidDecryptionPasswordException();
+		}
+		return encryptedPass;
+	}
+	
+	protected Set<CloudAccount> addAdminToDescendants(UserHalper memberHalper, CloudAccountRole newRole, Collection<CloudAccount> subAccounts, byte[] decryptedUserPass) throws InvalidDecryptionPasswordException{
+		Set<CloudAccount> toPut = new HashSet<CloudAccount>();
+		byte[] encryptedPass;
+		
+		for(CloudAccount subAccount : subAccounts){
+			encryptedPass = encryptPassword(memberHalper, new GroupHalper(subAccount).getUnencryptedGroupPass(user, decryptedUserPass));
+			memberHalper.makeMyMembership(subAccount, newRole, MembershipStatus.NORMAL, encryptedPass);
+			toPut.add(subAccount);
+			associatedRole.put(memberHalper.getKey(), newRole.getKey());
+		}
+	
+		return toPut;
+	}
+	
+	protected Set<CloudAccount> removeAdminFromDescendants(CloudAccount account, Collection<CloudAccount> subAccounts){
+		Set<CloudAccount> toPut = new HashSet<CloudAccount>();
+		for(CloudAccount subAccount : subAccounts){
+			toPut.add(subAccount);
+			subAccount.removeMembershipFor(account.getKey());
+			account.removeMembershipFor(subAccount.getKey());
+		}
+		
+		return toPut;
+	}
+	
+	protected byte[] getUnencryptedGroupPass(UserHalper user, GroupHalper group, MembershipsValidationSchema vSchema) throws InvalidDecryptionPasswordException {
+		if (unencryptedGroupPass == null) {
+			if(user.isMimStaff() && user.getMembershipForGroup(group.getEntity()) == null) {
+				return null;
+			} else {
+				return group.getUnencryptedGroupPass(user, vSchema.getCurrentUserPassword());
+			}
+		} else {
+			return unencryptedGroupPass;
+		}
+	}
+	
+	protected Set<RoleInfo> getValidRoleSet() {
+		Set<RoleInfo> validRoles = Sets.newHashSet();
+		// Check for group admin memberships.  We keep the current group's is memory, so check that before hitting the datastore for inherited admin status.
+		if (currentGroupAdminMemberships.containsKey(user.getKey()) || group.isGroupAdminOrInheritedAdmin(user.getEntity().getId()) || user.isMimStaff()) {
+			for (CloudAccountRole role : group.getOwnedRolesList()) {
+				validRoles.add(CloudAccountHalper.getRoleInfo(role, group.getEntity()));
+			}
+		} else {
+			for (CloudAccountRole role : group.getOwnedRolesList()) {
+				if (! role.getKey().equals(group.getEntity().getAdminRoleKey())) {
+					validRoles.add(CloudAccountHalper.getRoleInfo(role, group.getEntity()));
+				}
+			}
+		}
+		
+		return validRoles;
+	}
+	
+	public UserHalper getCurrentUser() {
+		return user;
+	}
+	
+	public GroupHalper getGroup() {
+		return group;
+	}
+	
+	private void loadGroupInfo() {
+		for (Membership membership : group.getGroupAdminMemberships()) {
+			currentGroupAdminMemberships.put(membership.getEncLnkAccountKey(), membership);
+		}
+	}
+
+	public Map<Key<CloudAccount>, Key<CloudAccountRole>> getAssociatedRole() {
+		return new HashMap<Key<CloudAccount>, Key<CloudAccountRole>>(associatedRole);
+	}
+
+	public List<CloudAccount> getAffectedUsers() {
+		return new ArrayList<CloudAccount>(affectedUsers);
+	}
+}

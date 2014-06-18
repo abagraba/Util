@@ -1,0 +1,1 @@
+validationExclusions=applet_src/**|test/**|remote/**

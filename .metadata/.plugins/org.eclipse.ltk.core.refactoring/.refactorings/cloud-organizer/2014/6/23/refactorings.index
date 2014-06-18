@@ -1,0 +1,28 @@
+1401721433535	Rename local variable 'studyDetails'
+1401721443553	Rename local variable 'seriesDetails'
+1401721447061	Rename local variable 'dcryptedSeriesDetails'
+1401737500942	Infer generic type arguments
+1401737842653	Delete element
+1401737853190	Delete element
+1401737890655	Delete elements
+1401737906982	Delete element
+1401737914074	Delete element
+1401738189567	Delete element
+1401740452966	Rename local variable 'box'
+1401741677980	Rename type variable 'T'
+1401829918766	Rename field 'continueon'
+1401911226018	Rename local variable 'uids'
+1401976732033	Rename local variable 'collection'
+1401977328646	Rename method 'searchPart'
+1401977943142	Rename method 'search'
+1401978416464	Rename local variable 'series'
+1401978422499	Rename local variable 'barf'
+1401978440629	Rename local variable 'fakeDetails'
+1401980343086	Rename local variable 'vce'
+1401980928186	Infer generic type arguments
+1401981456066	Rename method 'parseFile'
+1401984240197	Rename local variable 'filepath'
+1402002205222	Rename local variable 'string'
+1402064193605	Rename type 'VerifierSearch'
+1402064732155	Rename field 'back'
+1402064792898	Rename local variable 'buttons'

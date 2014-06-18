@@ -1,0 +1,120 @@
+package com.mimvista.cloud.organizer.verifier.panels;
+
+import java.util.Date;
+
+import com.mimvista.cloud.organizer.verifier.VerifierTask;
+import com.mimvista.cloud.shared.common.enums.StudyEnums.Sex;
+import com.mimvista.cloud.shared.common.mim.SeriesDetails;
+import com.mimvista.cloud.shared.common.mim.SeriesDetails.DecryptedSeriesDetails;
+import com.mimvista.cloud.shared.common.mim.StudyDetails;
+import com.mimvista.cloud.shared.common.mim.StudyDetails.DecryptedStudyDetails;
+import com.mimvista.util.DateUtils;
+
+public class VerifierSeriesView {
+
+	private String patientName;
+	private String patientID;
+
+	private String studyDescription;
+	private String studyUID;
+	private String seriesDescription;
+	private String seriesUID;
+
+	private String modality;
+	private int imageCount;
+	private Date seriesDate;
+
+	private Date birthday;
+	private Sex sex;
+
+	private String ownerName;
+	private String sopInstanceUID;
+
+	public VerifierSeriesView(StudyDetails study, SeriesDetails series) {
+		DecryptedStudyDetails decryptedStudyDetails = study.getDecryptedDetails();
+		DecryptedSeriesDetails decryptedSeriesDetails = series.getDecryptedDetails();
+		ownerName = study.getOwner().getName();
+		seriesDate = series.getSeriesDate();
+		if (decryptedStudyDetails != null) {
+			patientName = decryptedStudyDetails.getPatientName();
+			patientID = decryptedStudyDetails.getPatientId();
+			studyDescription = decryptedStudyDetails.getDescription();
+			studyUID = decryptedStudyDetails.getStudyUID();
+			birthday = decryptedStudyDetails.getBirthdate();
+			sex = decryptedStudyDetails.getSex();
+		}
+		else {
+			patientName = study.getPatientNameTrunc();
+			patientID = study.getPatientIdTrunc();
+			studyDescription = study.getStudyDescription();
+		}
+		if (decryptedSeriesDetails != null) {
+			seriesUID = decryptedSeriesDetails.getSeriesUID();
+			seriesDescription = decryptedSeriesDetails.getDescription();
+
+			modality = decryptedSeriesDetails.getModality();
+			imageCount = decryptedSeriesDetails.getNumImages() != null ? decryptedSeriesDetails.getNumImages() : 0;
+
+			sopInstanceUID = decryptedSeriesDetails.getSOPInstanceUID();
+		}
+		else {
+			seriesDescription = series.getDescription();
+			modality = series.getModality();
+		}
+	}
+
+	public static enum VerifierSeriesViewEnum {
+		OWNER_NAME(VerifierTask.props.getProperty("VERIFIER_PARAMETER_OWNER_NAME")), PATIENT_NAME(VerifierTask.props
+				.getProperty("VERIFIER_PARAMETER_PATIENT_NAME")), PATIENT_ID(VerifierTask.props.getProperty("VERIFIER_PARAMETER_PATIENT_ID")), BIRTH_DATE(
+				VerifierTask.props.getProperty("VERIFIER_PARAMETER_BIRTH_DATE")), SEX(VerifierTask.props.getProperty("VERIFIER_PARAMETER_GENDER")), MODALITY(
+				VerifierTask.props.getProperty("VERIFIER_PARAMETER_MODALITY")), IMAGE_COUNT(VerifierTask.props.getProperty("VERIFIER_PARAMETER_IMAGE_COUNT")), STUDY_UID(
+				VerifierTask.props.getProperty("VERIFIER_PARAMETER_STUDY_UID")), STUDY_DESCRIPTION(VerifierTask.props
+				.getProperty("VERIFIER_PARAMETER_STUDY_DESCRIPTION")), SERIES_UID(VerifierTask.props.getProperty("VERIFIER_PARAMETER_SERIES_UID")), SERIES_DESCRIPTION(
+				VerifierTask.props.getProperty("VERIFIER_PARAMETER_SERIES_DESCRIPTION")), SERIES_DATE(VerifierTask.props
+				.getProperty("VERIFIER_PARAMETER_SERIES_DATE")), SOP_INSTANCE_ID(VerifierTask.props.getProperty("VERIFIER_PARAMETER_SOP_ID"));
+
+		private String name;
+
+		private VerifierSeriesViewEnum(String name) {
+			this.name = name;
+		}
+
+		public String getValue(VerifierSeriesView view) {
+			switch (this) {
+				case OWNER_NAME:
+					return view.ownerName != null ? view.ownerName : "";
+				case PATIENT_NAME:
+					return view.patientName != null ? view.patientName : "";
+				case PATIENT_ID:
+					return view.patientID != null ? view.patientID : "";
+				case MODALITY:
+					return view.modality != null ? view.modality : "";
+				case IMAGE_COUNT:
+					return view.imageCount + "";
+				case SERIES_DATE:
+					return view.seriesDate != null ? DateUtils.getPreferredDateFormat().format(view.seriesDate) : "";
+				case SERIES_UID:
+					return view.seriesUID != null ? view.seriesUID : "";
+				case SERIES_DESCRIPTION:
+					return view.seriesDescription != null ? view.seriesDescription : "";
+				case STUDY_UID:
+					return view.studyUID != null ? view.studyUID : "";
+				case STUDY_DESCRIPTION:
+					return view.studyDescription != null ? view.studyDescription : "";
+				case BIRTH_DATE:
+					return view.birthday != null ? DateUtils.getPreferredDateFormat().format(view.birthday) : "";
+				case SEX:
+					return view.sex != null ? view.sex.longName : "";
+				case SOP_INSTANCE_ID:
+					return view.sopInstanceUID != null ? view.sopInstanceUID : "";
+				default:
+					return null;
+			}
+		}
+
+		public String toString() {
+			return name;
+		}
+	}
+
+}

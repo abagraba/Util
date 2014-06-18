@@ -1,0 +1,64 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+	xmlns:g="urn:import:com.google.gwt.user.client.ui"
+	xmlns:sfw="urn:import:com.mimvista.cloud.client.widgets"
+	xmlns:c="urn:import:com.google.gwt.user.cellview.client">
+	<ui:style>
+		.singleGroupUserContainer {
+			width: auto;
+			min-width: 600px;
+			max-width: 750px;
+		}
+		<!-- In order to add width to the td element in stupidTable using pseudo-classes -->
+		.stupidTable {
+	
+		}
+		.stupidTable td {
+			width:50%;
+		}
+		.stupidTableEntry {
+			margin-right:2px;
+			margin-left:2px;
+			height:180px;
+		}
+	</ui:style>
+	<g:HTMLPanel>
+		<g:HTMLPanel ui:field='installationsListPanel'  addStyleNames="{style.singleGroupUserContainer}">
+			<g:Label ui:field='noPermissions' debugId="assistantconfig-nopermslabel"/>
+				
+			<g:HorizontalPanel addStyleNames="{style.stupidTable}">
+					<g:HTMLPanel styleName="sf-internalPanel" addStyleNames="{style.stupidTableEntry}">
+						<p><g:HTML ui:field='setupNoteMCA' /></p>
+						<ol>
+							<li><g:InlineLabel ui:field='mcaInfo1' /></li>
+							<li><g:InlineLabel ui:field='mcaInfo2' /></li>
+						</ol>
+						<sfw:FoxButton ui:field='downloadButton' url="/media/icons/mc_express.png" debugId="assistantconfig-downloadmca"/>
+					</g:HTMLPanel>
+
+					<g:HTMLPanel styleName="sf-internalPanel" addStyleNames="{style.stupidTableEntry}">
+						<p><g:HTML ui:field='setupNoteAssistant' />
+						<ol>
+							<li><g:InlineLabel ui:field='assistantInfo1' /></li>
+							<li><g:InlineLabel ui:field='assistantInfo2' /></li>
+							<li><g:InlineLabel ui:field='assistantInfo3' /></li>
+						</ol>
+						</p>
+						<sfw:FoxButton ui:field='createButton' url="/media/icons/mc_express.png" debugId="expressconfig-addaetitle"/>
+					</g:HTMLPanel>
+			</g:HorizontalPanel>
+			
+			<br/>
+			<g:Label ui:field='assistantInfo' debugId="assistantconfig-assisstantinfo"/>
+			<br/>
+			<g:Label ui:field='noInstallationsLabel' debugId="assistantconfig-noconfigmessage"/>
+			<br/>
+			<sfw:ListFormCellTable ui:field='cellTable' debugId="assistantconfig-configcontainer"/>
+			<c:SimplePager ui:field='pager' />
+			<br />
+			<div>
+				<sfw:FoxButton ui:field="trashSelectedButton" url="/media/icons/trash.png" debugId="expressconfig-trashselected"/>
+			</div>
+		</g:HTMLPanel>
+	</g:HTMLPanel>
+</ui:UiBinder> 

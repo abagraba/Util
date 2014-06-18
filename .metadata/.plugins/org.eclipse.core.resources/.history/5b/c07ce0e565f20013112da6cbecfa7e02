@@ -1,0 +1,223 @@
+package com.mimvista.cloud.organizer.verifier;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+import com.mimvista.Nullable;
+import com.mimvista.archive.search.SearchResultsListener;
+import com.mimvista.cloud.crypto.common.items.BasicStudyItem;
+import com.mimvista.cloud.crypto.common.items.BasicStudyItem.BasicSeriesItem;
+import com.mimvista.cloud.organizer.CloudOrganizer;
+import com.mimvista.cloud.shared.common.BasicSearchParamsFilter;
+import com.mimvista.cloud.shared.common.StudyDetailsFilter;
+import com.mimvista.cloud.shared.common.enums.StudyEnums.Sex;
+import com.mimvista.cloud.shared.common.enums.StudyEnums.StudyDataContents;
+import com.mimvista.cloud.shared.common.enums.StudyEnums.StudyLocation;
+import com.mimvista.cloud.shared.common.enums.StudyEnums.StudyStatus;
+import com.mimvista.cloud.shared.common.mim.SeriesDetails;
+import com.mimvista.cloud.shared.common.mim.StudyDetails;
+import com.mimvista.cloud.shared.common.mim.StudySearchParams;
+import com.mimvista.cloud.shared.common.mim.StudyDetails.DecryptedStudyDetails;
+import com.mimvista.cloud.shared.common.mim.StudySearchParams.BasicSearchParams;
+import com.mimvista.cloud.shared.common.mim.StudySearchParams.SearchMaskedUIDsParams;
+import com.mimvista.mimcloud.commands.GetStudiesCommand;
+import com.mimvista.mimcloud.commands.GetStudiesCommand.GetStudiesBySearch;
+import com.mimvista.mimcloud.commands.GetStudiesCommand.GetStudiesByUIDsMaskedCommand;
+import com.mimvista.mimcloud.commands.GetStudiesCommand.GetStudiesByArchivalUIDsMaskedCommand;
+import com.mimvista.mimcloud.connection.CloudClient;
+import com.mimvista.mimcloud.connection.CloudResponseException;
+import com.mimvista.mimcloud.search.ArchivalIdFilter;
+import com.mimvista.mimcloud.search.AssistantStudyFetcher;
+import com.mimvista.mimcloud.search.StudyUidFilter;
+import com.mimvista.util.StringUtils;
+import com.mimvista.util.progress.Progress;
+
+public class CloudSearch {
+
+	private static final int batchSize = 1024;
+
+	/**
+	 * Performs a parameter search from given sets of UIDs. Responses are
+	 * returned by calling the
+	 * {@link SearchResultsListener#setSearchResults(Object) serSearchResults}
+	 * method.
+	 */
+	public static void search(CloudClient client, BasicSearchParams params, Progress progress, SearchResultsListener<List<BasicStudyItem>> listener)
+			throws CloudResponseException {
+
+		GetStudiesCommand command = new GetStudiesBySearch(client, params);
+		StudyDetailsFilter filter = new BasicSearchParamsFilter(params);
+
+		progress.setIndeterminate(true);
+		progress.setDescription("Searching MIMCloud...");
+		progress.start();
+		List<BasicStudyItem> results = search(client, command, filter, params);
+		progress.setIndeterminate(false);
+		progress.finish();
+
+		progress.setDescription(results.size() + " results found.");
+		listener.setSearchResults(results);
+	}
+
+	/**
+	 * Performs a UID search from given sets of UIDs. If a given set is null, it
+	 * is not used as a parameter in the search. If both are null, the search
+	 * gets an empty list of results. Responses are returned by calling the
+	 * {@link SearchResultsListener#setSearchResults(Object) serSearchResults}
+	 * method.
+	 */
+	public static void search(CloudClient client, @Nullable Set<String> studyuids, @Nullable Set<String> seriesuids, @Nullable Progress progress,
+			SearchResultsListener<List<BasicStudyItem>> listener) throws CloudResponseException {
+		if (studyuids == null && seriesuids == null) {
+			listener.setSearchResults(new ArrayList<BasicStudyItem>());
+			return;
+		}
+
+		boolean studies = studyuids != null;
+		List<Set<String>> batches = splitSet(studies ? studyuids : seriesuids, batchSize);
+
+		if (progress != null) {
+			progress.setIndeterminate(false);
+			progress.setTotal(batches.size());
+			progress.setDescription("Searching MIMCloud...");
+			progress.start();
+		}
+
+		List<BasicStudyItem> results = Lists.newArrayList();
+		for (Set<String> batch : batches) {
+			results.addAll(searchBatch(client, batch, studies));
+			if (progress != null)
+				progress.increment();
+		}
+
+		if (studyuids != null && seriesuids != null) {
+			List<BasicStudyItem> newresults = Lists.newArrayList();
+			for (BasicStudyItem result : results) {
+				for (BasicSeriesItem series : result.getAllSeries())
+					if (!seriesuids.contains(result))
+						result.removeSeries(series.archivalIDmasked);
+			}
+		}
+
+		if (progress != null)
+			progress.setDescription(results.size() + " results found.");
+		listener.setSearchResults(results);
+	}
+
+	private static List<BasicStudyItem> searchBatch(CloudClient client, Set<String> uids, boolean studies) throws CloudResponseException {
+		if (uids == null)
+			return null;
+
+		GetStudiesCommand command;
+		StudyDetailsFilter filter;
+		StudySearchParams params = new SearchMaskedUIDsParams(uids);
+		params.setFilterOutInaccessible(true);
+		params.setMaxResults(Integer.MAX_VALUE);
+		if (studies) {
+			command = new GetStudiesByUIDsMaskedCommand(client, (SearchMaskedUIDsParams) params);
+			filter = new StudyUidFilter(uids);
+		}
+		else {
+			command = new GetStudiesByArchivalUIDsMaskedCommand(client, (SearchMaskedUIDsParams) params);
+			filter = new ArchivalIdFilter(uids);
+		}
+		return search(client, command, filter, params);
+	}
+
+	private static <V> List<Set<V>> splitSet(Set<V> bigSet, int batchSize) {
+		List<Set<V>> batches = Lists.newArrayList();
+		if (bigSet.size() < batchSize) {
+			batches.add(bigSet);
+			return batches;
+		}
+		int i = 0;
+		Set<V> batch = null;
+		for (V v : bigSet) {
+			if (i % batchSize == 0) {
+				if (batch != null)
+					batches.add(batch);
+				batch = Sets.newHashSet();
+			}
+			batch.add(v);
+		}
+		if (batch != null)
+			batches.add(batch);
+		return batches;
+	}
+
+	public static List<BasicStudyItem> search(CloudClient client, GetStudiesCommand command, StudyDetailsFilter filter, StudySearchParams params)
+			throws CloudResponseException {
+		AssistantStudyFetcher fetcher = new AssistantStudyFetcher(filter, client, params.getMaxResults());
+		fetcher.fetch(command);
+		return fetcher.buildStudyList(params);
+	}
+
+	/**
+	 * Performs a fake search for testing purposes.
+	 */
+	public static List<BasicStudyItem> fakeSearch(int numresults, Progress progress, SearchResultsListener<List<BasicStudyItem>> listener) {
+		if (progress != null)
+			progress.start();
+		List<BasicStudyItem> results = Lists.newArrayList();
+		populateWithFakeResults(results, numresults);
+		if (listener != null)
+			listener.setSearchResults(results);
+		if (progress != null)
+			progress.finish();
+		return results;
+	}
+
+	private static void populateWithFakeResults(List<BasicStudyItem> results, int studies) {
+		for (int i = 0; i < studies; i++)
+			results.add(new BasicStudyItem(fakeStudyDetails("First " + i + " Last")));
+	}
+
+	private static StudyDetails fakeStudyDetails(String name) {
+		StudyDetails study = new StudyDetails();
+		study.setCompressedBundleSize(10L);
+		study.setCompressedDicomSize(10L);
+		study.setCreated(new Date());
+		study.setDbKeyId(10L);
+		study.setDbKeyStr(StringUtils.randomString(20));
+		DecryptedStudyDetails derp = new DecryptedStudyDetails();
+		derp.setBirthdate(new Date());
+		derp.setDescription("A person.");
+		derp.setPatientAge("" + Math.random() * 90);
+		derp.setPatientId(StringUtils.randomString(20));
+
+		derp.setPatientName(name);
+		derp.setSex(Math.random() < 0.5 ? Sex.M : Sex.F);
+
+		derp.setStudyUID(StringUtils.randomString(20));
+		study.setDecryptedDetails(derp);
+		study.setEncryptedDicomInfo(new byte[1024]);
+		study.setEncryptedDicomKey(new byte[1024]);
+		study.setEncryptedMobileInfo(new byte[1024]);
+		study.setEncryptedPrivKey(new byte[1024]);
+		study.setOwner(CloudOrganizer.getCloudClient().getCredentials().getAccountSummary().getActor());
+
+		Set<SeriesDetails> series = Sets.newHashSet();
+		int numSeries = (int) (Math.random() * 25) + 1;
+		for (int j = 0; j < numSeries; j++)
+			series.add(fakeSeriesDetails());
+		study.setSeries(series);
+
+		return study;
+	}
+
+	private static SeriesDetails fakeSeriesDetails() {
+		SeriesDetails series = new SeriesDetails();
+		series.setArchivalIDmasked(StringUtils.randomString(20));
+		series.setSeriesUIDmasked(StringUtils.randomString(20));
+		series.setCompressedBundleSize(100);
+		series.setCompressedDicomSize(100);
+		return series;
+	}
+
+}

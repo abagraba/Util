@@ -1,0 +1,12 @@
+package com.mimvista.cloud.organizer.verifier;
+
+import com.mimvista.cloud.organizer.verifier.panels.VerifierSearchResultView;
+
+public class ResultWriter {
+
+	public static writeToCSV(VerifierSearchResultView view){
+		
+	}
+	
+	
+}

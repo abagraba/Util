@@ -1,0 +1,26 @@
+package PNGDecoder.Chunks;
+
+import PNGDecoder.Chunk;
+import PNGDecoder.ChunkRegistry;
+
+public class ChunkcHRM extends Chunk {
+	private static int entriesPerRow = 8;
+
+	public static void register() {
+		ChunkRegistry.registerChunk("cHRM", ChunkcHRM.class);
+		System.out.println("cHRM Chunk Registered.");
+	}
+
+	public ChunkcHRM(int size, byte[] header, byte[] data, int crc) {
+		super(size, header, data, crc);
+	}
+
+	protected boolean valid() {
+		return size == 32;
+	}
+
+	protected String chunkDescription() {
+		return pad("White Point:") + "(" + unsign(toInt(data, 0)) + ", " + unsign(toInt(data, 4)) +")";
+	}
+
+}

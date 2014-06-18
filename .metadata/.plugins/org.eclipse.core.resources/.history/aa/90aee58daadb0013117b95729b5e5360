@@ -1,0 +1,24 @@
+
+public class IHDRChunk extends Chunk {
+
+	public IHDRChunk(int size, byte[] header, byte[] data, int crc) {
+		super(size, header, data, crc);
+	}
+	
+	protected String chunkDescription() {
+		if (size != 13)
+			return "Invalid IHDR Chunk";
+		int bytesPerLine = 80;
+		String desc = "Raw Data:\n";
+		for (int i = 0; i <= (data.length - 1) / bytesPerLine; i++) {
+			int len = data.length - i * bytesPerLine;
+			if (len > bytesPerLine)
+				len = bytesPerLine;
+			desc += "\t\t" + i * bytesPerLine + "\t";
+			desc += toHex(data, i * bytesPerLine, len);
+			desc += "\n";
+		}
+		return desc;
+	}
+
+}

@@ -1,0 +1,44 @@
+import java.io.IOException;
+import java.io.InputStream;
+
+public class Chunker {
+
+	private static byte[] size = new byte[4];
+	private static byte[] header = new byte[4];
+	private static byte[] crc = new byte[4];
+	
+	public static Chunk nextChunk(InputStream src) {
+		if(!readBytes(src, size)){
+			System.err.println("Invalid chunk size: Unexpected EOF.");
+			System.exit(-1);
+		}
+		if(!readBytes(src, header)){
+			System.err.println("Invalid chunk header: Unexpected EOF.");
+			System.exit(-1);
+		}
+		int chunkSize = (size[0] << 24) +(size[1] << 16) +(size[2] << 8) + size[3];
+			
+	}
+
+	public static boolean readBytes(InputStream src, byte[] data) {
+		try {
+			if (data.length != src.read(data))
+				return false;
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return true;
+	}
+	
+	public static byte[] readBytes(InputStream src, int len) {
+		byte[] data = new byte[len];
+		try {
+			if (len != src.read(data))
+				return null;
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return data;
+	}
+
+}

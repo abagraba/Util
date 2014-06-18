@@ -1,0 +1,18 @@
+import java.io.FileInputStream;
+import java.io.InputStream;
+
+
+public class PNGReader {
+
+	public void readPNG(File f){
+		InputStream is = new FileInputStream(f);
+		Chunk chunk;
+		while ((chunk = Chunker.nextChunk(is)) != null){
+			System.out.println(chunk);
+			chunk = null;
+		}
+		is.close();
+	}
+	
+	
+}

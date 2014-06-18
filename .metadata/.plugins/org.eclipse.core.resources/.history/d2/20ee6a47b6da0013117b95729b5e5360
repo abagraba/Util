@@ -1,0 +1,795 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="mimjava" default="jar" basedir=".">
+	<description>Builds, tests, and runs the project mimjava.</description>
+
+	<!-- java 7 likes to default to ASCII as the encoding, which is weird and breaks stuff -->
+	<presetdef name="javac">
+		<javac encoding="UTF-8" />
+	</presetdef>
+
+
+	<property name="dist.dir" location="dist" />
+	<property name="obs.file" location="obfuscation/obfuscatePro.zkm" />
+	<property name="obs.defTrimExclude" location="obfuscation/defaultTrimExclude.txt" />
+	<property name="obs.defExclude" location="obfuscation/defaultExclude.txt" />
+	<property name="wolf.manifest" location="tools/wolf.mf" />
+	<property name="mim.manifest" location="build/MANIFEST.MF" />
+	<property name="build.mimpacsapp" location="build/mimpacsapp" />
+	<property name="build.webPl" location="build/webPl" />
+	<property name="mimpacsapp.manifest" location="${build.mimpacsapp}/manifest.mf" />
+	<property name="webPl.manifest" location="${build.webPl}/manifest.mf" />
+	<property name="cloud.jnlp" location="resources/xml/mimviewercloud.jnlp" />
+	<property name="src.webadmin" location="services/WebAdmin/webapps/" />
+
+	<property name="src.3rdparty" location="src_3rdparty/" />
+	<property name="build.3rdparty" location="build/3rdparty_classes/" />
+	<property name="medlever.resources" location="bin/resources/medlever/" />
+	<property name="medlever.signedJars" location="${dist.dir}/medlever/signedLibs/" />
+
+	<property name="src" value="src" />
+	<property name="csrc" value="csrc" />
+	<property name="min_src" value="min_src" />
+	<property name="build_src" value="build_src" />
+	<property name="npw_src" value="npw_src" />
+	<property name="test_src" value="testsrc" />
+
+	<target name="webadmin" depends="compile,-genWebPlJarManifest">
+		<!-- delete the existing jar files. -->
+		<delete dir="${src.webadmin}/MIMStorageServer/lib" />
+		<mkdir dir="${src.webadmin}/MIMStorageServer/lib" />
+
+		<copy todir="build/min_classes/">
+			<fileset dir="resources/properties/" includes="*.properties, **.theme" />
+		</copy>
+		<copy todir="build/min_classes/resources/graphics/web">
+			<fileset dir="resources/graphics/web" />
+		</copy>
+		<copy todir="build/min_classes/com/mimvista/proui/icons">
+			<fileset dir="min_src/com/mimvista/proui/icons" includes="*.png" />
+		</copy>
+
+		<jar manifest="${mimpacsapp.manifest}" jarfile="${src.webadmin}/MIMStorageServer/lib/mimpacsapp.jar" basedir="build/min_classes" excludes="**Tag_Name*.properties,**_**.properties,**.svg">
+		</jar>
+		<jar manifest="${webPl.manifest}" jarfile="${src.webadmin}/MIMStorageServer/lib/webadminwrapper.jar" basedir="build/webadmin_wrapper_classes" />
+
+		<taskdef resource="net/sf/antcontrib/antlib.xml">
+			<classpath>
+				<pathelement location="tools/ant-contrib-1.0b3.jar" />
+			</classpath>
+		</taskdef>
+		<for param="jartosign">
+			<path>
+				<fileset dir="${src.webadmin}/MIMStorageServer/lib/" includes="*.jar" />
+			</path>
+			<sequential>
+				<retry retrycount="10">
+					<signjar jar="@{jartosign}" keystore="tools/jarsign/keystore" alias="mim" storepass="grap3fr00t" tsaurl="http://timestamp.comodoca.com/rfc3161" />
+				</retry>
+			</sequential>
+		</for>
+	</target>
+
+	<target name="slingerObfuscate" depends="buildall,signJars">
+		<delete file="${dist.dir}/mimcombined.jar" />
+		<jar jarfile="${dist.dir}/mimcombined.jar">
+			<zipfileset src="bin/lib/mimJars/mim_confidential.jar" />
+			<zipfileset src="${dist.dir}/mim.jar" />
+			<zipfileset src="../mimcloud_assistant/dist/mca.jar" />
+		</jar>
+		<move file="${dist.dir}/mimcombined.jar" tofile="${dist.dir}/mim.jar" />
+
+		<java classname="com.mimvista.build.ZkmMaker" failonerror="true">
+			<arg value="${obs.file}" />
+			<arg value="MIMCLOUD_ASSISTANT" />
+			<classpath>
+				<pathelement path="${java.class.path}" />
+				<pathelement path="build/min_classes" />
+				<pathelement path="build/build_classes" />
+				<pathelement path="build/classes" />
+				<pathelement path="${build.3rdparty}" />
+				<path refid="minSrcLibs" />
+			</classpath>
+		</java>
+
+		<taskdef name="ZKM" classname="ZKMTask" classpath="../mim_confidential/tools/ZKM.jar" />
+		<ZKM scriptFileName="${obs.file}" logFileName="ZKM_log.txt" defaultExcludeFileName="${obs.defExclude}" defaultTrimExcludeFileName="${obs.defTrimExclude}" />
+
+		<move file="mim.jar" tofile="${dist.dir}/mim.jar" />
+		<move file="mim_native.jar" tofile="${dist.dir}/mim_native.jar" />
+		<signJarDir jardir="${dist.dir}" skipSpecialJars="true" />
+	</target>
+
+	<target name="oisintegration" depends="buildall,makeFakeNative,signJars">
+		<delete file="${dist.dir}/mim.jar" />
+		<jar jarfile="${dist.dir}/mim.jar">
+			<fileset dir="build/min_classes" />
+			<fileset dir="build/classes" excludes="**/HQServerImpl.class,**/HQServerImpl_Skel.class,**/DcmDirLicenseCreator.class,**/hqkeypair,**/hibernate.cfg.xml" />
+			<fileset dir="${build.3rdparty}" />
+			<fileset dir="bin" includes="resources/medlever/**" />
+		</jar>
+
+		<delete file="${dist.dir}/mimcombined.jar" />
+		<jar jarfile="${dist.dir}/mimcombined.jar">
+			<zipfileset src="bin/lib/mimJars/mim_confidential.jar" />
+			<zipfileset src="${dist.dir}/mim.jar" />
+		</jar>
+		<move file="${dist.dir}/mimcombined.jar" tofile="${dist.dir}/mim.jar" />
+
+		<java classname="com.mimvista.build.ZkmMaker" failonerror="true">
+			<arg value="${obs.file}" />
+			<classpath>
+				<pathelement path="${java.class.path}" />
+				<pathelement path="build/min_classes" />
+				<pathelement path="build/build_classes" />
+				<pathelement path="build/classes" />
+				<pathelement path="${build.3rdparty}" />
+				<path refid="minSrcLibs" />
+			</classpath>
+		</java>
+
+		<taskdef name="ZKM" classname="ZKMTask" classpath="../mim_confidential/tools/ZKM.jar" />
+		<ZKM scriptFileName="${obs.file}" logFileName="ZKM_log.txt" defaultExcludeFileName="${obs.defExclude}" defaultTrimExcludeFileName="${obs.defTrimExclude}" />
+
+		<move file="mim.jar" tofile="${dist.dir}/mim.jar" />
+		<move file="mim_native.jar" tofile="${dist.dir}/mim_native.jar" />
+
+		<retry retrycount="10">
+			<signjar jar="${dist.dir}/mim.jar" keystore="tools/jarsign/keystore" alias="mim" storepass="grap3fr00t" tsaurl="http://timestamp.comodoca.com/rfc3161" />
+		</retry>
+	</target>
+
+	<target name="signCustomizedJars">
+		<delete dir="${medlever.signedJars}" />
+		<mkdir dir="${medlever.signedJars}" />
+
+		<copy file="bin/lib/minJars/dcm4che2.jar" todir="${medlever.signedJars}" />
+		<copy file="bin/lib/minJars/keyczar06b.jar" todir="${medlever.signedJars}" />
+		<copy file="bin/lib/minJars/dcm4che2-net.jar" todir="${medlever.signedJars}" />
+		<copy file="bin/lib/jars/bcprov-jdk16-142.jar" todir="${medlever.signedJars}" />
+
+		<signJarDir jardir="${medlever.signedJars}" skipSpecialJars="false" />
+	</target>
+
+	<target name="thirdparty_compile" depends="min_compile">
+		<mkdir dir="${build.3rdparty}" />
+		<javac srcdir="${src.3rdparty}" destdir="${build.3rdparty}" debug="true" includeantruntime="false" />
+	</target>
+
+	<target name="linuxJNI_compile">
+		<exec dir="${csrc}" executable="make" os="Linux" failifexecutionfails="false">
+			<arg line="allLinux copy clean" />
+		</exec>
+	</target>
+
+	<property name="src" value="src" />
+	<property name="min_src" value="min_src" />
+	<property name="build_src" value="build_src" />
+	<property name="npw_src" value="npw_src" />
+	<property name="test_src" value="testsrc" />
+	<property name="cfimpl.file" location="${src}/com/mimvista/extensions/shims/commands/CommandFactoryImpl.java" />
+
+	<target name="resources">
+		<copy todir="build/classes/com/mimvista/proui/icons">
+			<fileset dir="min_src/com/mimvista/proui/icons" includes="*.png" />
+		</copy>
+		<copy todir="build/classes/resources/certification">
+			<fileset dir="resources/certification" />
+		</copy>
+		<copy todir="build/classes/resources/xml">
+			<fileset dir="resources/xml" />
+		</copy>
+		<copy todir="build/classes/resources/help">
+			<fileset dir="resources/help" />
+		</copy>
+		<copy file="${src}/com/mimvista/install/license.txt" tofile="build/classes/com/mimvista/install/license.txt" />
+		<copy file="${src}/com/mimvista/install/viewerlicense.txt" tofile="build/classes/com/mimvista/install/viewerlicense.txt" />
+		<copy file="${src}/com/mimvista/install/mimviewercd_license.txt" tofile="build/classes/com/mimvista/install/mimviewercd_license.txt" />
+		<copy file="${src}/com/mimvista/install/mimviewer_cloud_license.txt" tofile="build/classes/com/mimvista/install/mimviewer_cloud_license.txt" />
+		<copy file="${src}/com/mimvista/install/slinger_license.txt" tofile="build/classes/com/mimvista/install/slinger_license.txt" />
+
+		<copy todir="build/classes/com/mimvista/license/hq/">
+			<fileset dir="${src}/com/mimvista/license/hq" includes="**/hqkeypair,**/hqpublickey" />
+		</copy>
+		<copy todir="build/classes/">
+			<fileset dir="resources/properties/" includes="*.properties,*.theme" />
+		</copy>
+		<copy todir="build/classes/">
+			<fileset dir="${src}" includes="**/*.hbm.xml" />
+		</copy>
+		<copy todir="build/classes/resources/graphics/svg/">
+			<fileset dir="resources/graphics/svg" includes="**.svg" />
+		</copy>
+		<copy todir="build/classes/resources/graphics/png/">
+			<fileset dir="resources/graphics/" includes="splash_viewer.png" />
+			<fileset dir="resources/graphics/" includes="splash_mimviewer_cloud.png" />
+			<fileset dir="resources/graphics/" includes="splash_mimviewer_cloud_pro.png" />
+		</copy>
+		<copy todir="build/classes/resources/graphics/models">
+			<fileset dir="resources/graphics/models" />
+		</copy>
+		<copy todir="build/classes/resources/graphics/textures">
+			<fileset dir="resources/graphics/textures" />
+		</copy>
+		<antcall target="colortables-zip" />
+		<antcall target="protocols-zip" />
+		<copy todir="build/classes/">
+			<fileset dir="resources/xml/" includes="*.xsd" />
+		</copy>
+		<copy todir="build/classes/com/sun/swing/internal/plaf/basic/resources">
+			<fileset dir="resources/properties" includes="basic_*.properties" />
+		</copy>
+	</target>
+
+	<target name="colortables-zip">
+		<zip zipfile="build/classes/colortables.zip" basedir="resources/xml/" includes="*.maps.txt,ColorTables/*.xml" />
+	</target>
+
+	<target name="protocols-zip">
+		<zip zipfile="build/classes/protocols.zip" basedir="resources/xml/HangingProtocols" includes="**/*.mhp" />
+	</target>
+
+	<path id="minSrcLibs">
+		<fileset dir="bin/lib/minJars">
+			<include name="**/*.jar" />
+		</fileset>
+	</path>
+
+	<path id="regularSrcLibs">
+		<path refid="minSrcLibs" />
+		<fileset dir="bin/lib/jars">
+			<include name="**/*.jar" />
+		</fileset>
+		<!-- Too scared to mess with extensions -->
+		<fileset dir="bin/lib/extensions">
+			<include name="**/*.jar" />
+		</fileset>
+		<fileset dir="bin/lib/mimJars">
+			<include name="mim_extend.jar" />
+		</fileset>
+	</path>
+
+	<path id="npwSrcLibs">
+		<path refid="testSrcLibs" />
+		<fileset dir="bin/lib/npwJars">
+			<include name="**/*.jar" />
+		</fileset>
+	</path>
+
+	<path id="testSrcLibs">
+		<path refid="regularSrcLibs" />
+		<fileset dir="bin/lib/testJars">
+			<include name="**/*.jar" />
+		</fileset>
+	</path>
+
+	<path id="winRun4J">
+		<fileset dir="bin/lib/minJars">
+			<include name="WinRun4J.jar" />
+		</fileset>
+	</path>
+
+	<target name="copyJavaws">
+		<!-- hackhackhack: no good way to add this to eclipse classpath, so copy to bin/lib... -->
+		<copy todir="bin/lib/npwJars">
+			<fileset dir="${java.home}/lib" includes="javaws.jar" />
+		</copy>
+	</target>
+
+	<target name="min_compile" depends="copyJavaws">
+		<mkdir dir="build/min_classes" />
+		<javac srcdir="${min_src}"
+		       excludes="com/mimvista/httpd/WebPatientListWrapper.java, com/mimvista/httpd/gui/SimpleProgressBar.java"
+		       destdir="build/min_classes"
+		       debug="true"
+		       includeantruntime="false">
+			<compilerarg value="-XDignore.symbol.file=true" />
+			<classpath>
+				<pathelement path="${java.class.path}" />
+				<path refid="minSrcLibs" />
+			</classpath>
+		</javac>
+
+		<mkdir dir="build/build_classes" />
+		<javac srcdir="${build_src}" destdir="build/build_classes" debug="true" includeantruntime="false">
+			<classpath>
+				<pathelement path="${java.class.path}" />
+				<path refid="regularSrcLibs" />
+				<pathelement path="build/min_classes" />
+			</classpath>
+		</javac>
+
+		<mkdir dir="build/webadmin_wrapper_classes" />
+
+		<javac srcdir="${min_src}"
+		       includes="com/mimvista/httpd/WebPatientListWrapper.java, com/mimvista/httpd/gui/SimpleProgressBar.java"
+		       destdir="build/webadmin_wrapper_classes"
+		       source="1.4"
+		       debug="true"
+		       includeantruntime="false">
+		</javac>
+	</target>
+
+	<target name="checkstyle">
+		<taskdef resource="checkstyletask.properties" classpath="bin/lib/checkstyle-5.3-all.jar" />
+		<checkstyle config="tools/sun_checks.xml" file="src/com/mimvista/archive/SeriesOpener.java" />
+	</target>
+
+	<target name="compile" depends="thirdparty_compile,min_compile,linuxJNI_compile">
+		<mkdir dir="build/classes" />
+
+		<javac destdir="build/classes" debug="true" includeantruntime="false" verbose="false">
+			<compilerarg value="-XDignore.symbol.file=true" />
+			<!---->
+			<src path="${src}" />
+			<exclude name="**/CommandFactoryImpl.java" />
+			<include name="**/*.java" />
+			<classpath>
+				<pathelement path="build/min_classes" />
+				<pathelement path="${java.class.path}" />
+				<pathelement path="${build.3rdparty}" />
+				<path refid="regularSrcLibs" />
+			</classpath>
+		</javac>
+
+		<mkdir dir="build/npw_classes" />
+		<javac srcdir="${npw_src}" destdir="build/npw_classes" debug="true" includeantruntime="false">
+			<compilerarg value="-XDignore.symbol.file=true" />
+			<classpath>
+				<pathelement path="build/min_classes" />
+				<pathelement path="build/classes" />
+				<pathelement path="${java.class.path}" />
+				<pathelement path="${build.3rdparty}" />
+				<path refid="npwSrcLibs" />
+			</classpath>
+		</javac>
+
+		<mkdir dir="build/test_classes" />
+		<javac srcdir="${test_src}" destdir="build/test_classes" debug="true" includeantruntime="false">
+			<compilerarg value="-XDignore.symbol.file=true" />
+			<classpath>
+				<pathelement path="build/min_classes" />
+				<pathelement path="build/classes" />
+				<pathelement path="build/npw_classes" />
+				<pathelement path="${java.class.path}" />
+				<pathelement path="${build.3rdparty}" />
+				<path refid="testSrcLibs" />
+			</classpath>
+		</javac>
+
+		<available file="${cfimpl.file}" property="isCFAvail" />
+		<fail unless="isCFAvail" message="CommandFactoryImpl is missing!  BOOM." />
+
+		<javac srcdir="${src}" destdir="build/classes" debug="true" includeantruntime="false">
+			<include name="**/CommandFactoryImpl.java" />
+			<classpath>
+				<pathelement path="build/min_classes" />
+				<pathelement path="build/classes" />
+				<pathelement path="${java.class.path}" />
+				<path refid="regularSrcLibs" />
+			</classpath>
+		</javac>
+
+	</target>
+
+	<target name="lonewolf" depends="buildall,generateWolfManifest,signJars">
+		<delete file="${dist.dir}/lonewolf/lonewolf.jar" />
+		<delete dir="${dist.dir}/lonewolf/bin/" />
+		<mkdir dir="${dist.dir}/lonewolf" />
+		<jar jarfile="${dist.dir}/lonewolf/lonewolf.jar" manifest="${wolf.manifest}">
+			<fileset dir="build/min_classes" />
+			<fileset dir="build/npw_classes" />
+			<fileset dir="build/classes" excludes="**/neuro/**,**/cardiac/**,**/internals/**,**/*.svg,**/*.properties" />
+		</jar>
+		<copy todir="${dist.dir}/lonewolf/bin/lib">
+			<fileset dir="bin/lib"
+			         excludes="**/batik.jar,**/ZKM.jar,**/mim.jar,**/jfreechart.jar,
+				**/itext-2.0.4.jar,**/jai_imageio.jar,extensions/lib**,extensions/j3d**,extensions/jogl/**,extensions/nativelibs/**" />
+			<!--<fileset dir="bin/lib"/>-->
+		</copy>
+		<copy file="tools/hibernate.cfg.xml" todir="${dist.dir}/lonewolf" />
+		<delete file="${wolf.manifest}" />
+	</target>
+
+	<target name="silvermanta" depends="clean,resources,min_compile">
+		<delete file="${dist.dir}/silvermanta/silvermanta.jar" />
+		<delete dir="${dist.dir}/silvermanta/bin/" />
+		<delete dir="${dist.dir}/silvermanta/services" />
+		<mkdir dir="${dist.dir}/silvermanta" />
+		<jar jarfile="${dist.dir}/silvermanta/silvermanta.jar">
+			<fileset dir="build/min_classes" />
+			<fileset dir="build/classes" excludes="**/*.svg" />
+		</jar>
+		<copy todir="${dist.dir}/silvermanta/bin/lib">
+			<path refid="minSrcLibs" />
+		</copy>
+		<copy todir="${dist.dir}/silvermanta/services/OemMobileServer">
+			<fileset dir="services/OemMobileServer" />
+		</copy>
+		<copy todir="${dist.dir}/silvermanta">
+			<fileset dir="tools/manta" />
+		</copy>
+		<copy file="services/OemMobileServer/bin/OemMobileServer32SA.inix" tofile="${dist.dir}/silvermanta/services/OemMobileServer/bin/OemMobileServer32.ini" />
+		<delete file="${dist.dir}/silvermanta/services/OemMobileServer/bin/OemMobileServer32SA.inix" />
+	</target>
+
+	<target name="silvermantadist" depends="clean,silvermanta">
+		<jar jarfile="dist/mimcombined.jar">
+			<zipfileset src="${dist.dir}/silvermanta/silvermanta.jar" />
+			<zipfileset src="bin/lib/mimJars/mim_confidential.jar" />
+		</jar>
+		<move file="dist/mimcombined.jar" tofile="${dist.dir}/silvermanta/silvermanta.jar" />
+		<zip destfile="${dist.dir}/manta.zip" basedir="${dist.dir}/silvermanta" />
+	</target>
+
+	<target name="eclipse-rmic" depends="compile">
+		<!-- run rmic on RMI interfaces -->
+		<!-- Not sure what the winrun4J lines are all about... -->
+		<rmic stubversion="compat" classname="com.mimvista.archive.remote.MIMRemoteInputStreamImpl" base="build/classes">
+			<classpath>
+				<pathelement path="build/min_classes" />
+				<path refid="winRun4J" />
+			</classpath>
+		</rmic>
+		<rmic stubversion="compat" classname="com.mimvista.archive.remote.RemoteQueryServerImpl" base="build/classes">
+			<classpath>
+				<pathelement path="build/min_classes" />
+				<path refid="winRun4J" />
+			</classpath>
+		</rmic>
+		<rmic stubversion="compat" classname="com.mimvista.archive.remote.SeriesContainerImpl" base="build/classes">
+			<classpath>
+				<path refid="winRun4J" />
+			</classpath>
+		</rmic>
+		<rmic stubversion="compat" classname="com.mimvista.rmi.TransferDialog" base="build/classes">
+			<classpath>
+				<pathelement path="build/min_classes" />
+				<path refid="winRun4J" />
+			</classpath>
+		</rmic>
+		<rmic stubversion="compat" classname="com.mimvista.dicom.server.DcmRcvStatusNotifier" base="build/classes">
+			<classpath>
+				<pathelement path="build/min_classes" />
+				<path refid="winRun4J" />
+			</classpath>
+		</rmic>
+		<rmic stubversion="compat" classname="com.mimvista.license.LicenseManagerImpl" base="build/classes">
+			<classpath>
+				<pathelement path="build/min_classes" />
+				<path refid="winRun4J" />
+			</classpath>
+		</rmic>
+		<rmic stubversion="compat" classname="com.mimvista.license.hq.HQServerImpl" base="build/classes">
+			<classpath>
+				<pathelement path="build/min_classes" />
+				<path refid="winRun4J" />
+			</classpath>
+		</rmic>
+	</target>
+
+	<target name="combinejar" depends="dist">
+		<delete file="dist/mimcombined.jar" />
+		<jar manifest="${mim.manifest}" jarfile="dist/mimcombined.jar">
+			<zipfileset src="bin/lib/mimJars/mim_secret.jar" />
+			<zipfileset src="bin/lib/mimJars/mim_confidential.jar" />
+			<zipfileset src="dist/mim.jar" />
+		</jar>
+		<move file="dist/mimcombined.jar" tofile="dist/mim.jar" />
+	</target>
+
+	<target name="-checkForNative">
+		<available property="native.exists" file="dist/mim_native.jar" />
+	</target>
+
+	<target name="makeFakeNative" depends="-checkForNative" unless="${native.exists}">
+		<echo>Making fake native jar...</echo>
+		<jar jarfile="dist/mim_native.jar" />
+	</target>
+
+	<!--
+		Running the CL encryptor is kinda slow, so we check file mod times here and
+		skip it if there is a file in 'shaders_encrypted' that is newer than all the
+		files in 'shaders'.
+	-->
+	<target name="checkIfWeNeedToClCrypt">
+		<taskdef resource="net/sf/antcontrib/antlib.xml">
+			<classpath>
+				<pathelement location="tools/ant-contrib-1.0b3.jar" />
+			</classpath>
+		</taskdef>
+
+		<mkdir dir="resources/shaders_encrypted/" />
+
+		<timestampselector property="newest.cl.file">
+			<path>
+				<fileset dir="resources/shaders/" />
+				<fileset dir="resources/shaders_encrypted/" />
+			</path>
+		</timestampselector>
+
+		<condition property="cl.already.encrypted">
+			<contains string="${newest.cl.file}" substring="resources${file.separator}shaders_encrypted" />
+		</condition>
+
+		<if>
+			<isset property="cl.already.encrypted" />
+			<then>
+				<echo message="Skipping CL encryption" />
+			</then>
+		</if>
+	</target>
+
+
+	<target name="clcrypt" unless="cl.already.encrypted" depends="checkIfWeNeedToClCrypt">
+		<echo message="Encrypting open CL files" />
+
+		<java classname="com.mimvista.build.CLCryptoProtector" failonerror="true" fork="true">
+			<arg value="resources/shaders/" />
+			<arg value="resources/shaders_encrypted/" />
+			<classpath>
+				<pathelement path="${java.class.path}" />
+				<pathelement path="build/build_classes" />
+				<pathelement path="build/min_classes" />
+				<path refid="regularSrcLibs" />
+			</classpath>
+		</java>
+	</target>
+	<target name="generateZkmFile">
+		<java classname="com.mimvista.build.ZkmMaker" failonerror="true">
+			<arg value="${obs.file}" />
+			<classpath>
+				<pathelement path="${java.class.path}" />
+				<pathelement path="build/build_classes" />
+				<pathelement path="build/min_classes" />
+				<path refid="minSrcLibs" />
+			</classpath>
+		</java>
+	</target>
+
+	<target name="generateWolfManifest">
+		<java classname="com.mimvista.build.JarManifestGenerator" failonerror="true">
+			<arg value="${wolf.manifest}" />
+			<classpath>
+				<pathelement path="${java.class.path}" />
+				<pathelement path="build/build_classes" />
+				<pathelement path="build/min_classes" />
+				<path refid="minSrcLibs" />
+			</classpath>
+		</java>
+	</target>
+
+	<target name="generateCloudJnlp">
+		<java classname="com.mimvista.build.JnlpGenerator" failonerror="true" fork="true">
+			<arg value="${cloud.jnlp}" />
+			<!-- excluded jars -->
+			<arg value="MIMFullAnnotationProcessors.jar" />
+
+			<classpath>
+				<pathelement path="${java.class.path}" />
+				<pathelement path="build/build_classes" />
+				<pathelement path="build/min_classes" />
+				<path refid="minSrcLibs" />
+			</classpath>
+		</java>
+	</target>
+
+	<!-- attributes for webstart use, e.g. for JNLP-launched MIMviewer -->
+	<macrodef name="genDefManifest">
+		<attribute name="manifest" default="NOT SET" />
+		<sequential>
+			<manifest file="@{manifest}">
+				<attribute name="Built-By" value="MIM Software Inc." />
+				<attribute name="Ant-Version" value="${ant.version}" />
+				<attribute name="Created-By" value="${ant.java.version}" />
+				<attribute name="Permissions" value="all-permissions" />
+			</manifest>
+		</sequential>
+	</macrodef>
+
+	<target name="-genWebPlJarManifest">
+		<mkdir dir="${build.mimpacsapp}" />
+		<mkdir dir="${build.webPl}" />
+		<genDefManifest manifest="${webPl.manifest}" />
+		<genDefManifest manifest="${mimpacsapp.manifest}" />
+		<!-- add any other manifest attributes specific only to web PL/admin here -->
+	</target>
+
+	<target name="-genMimJarManifest">
+		<genDefManifest manifest="${mim.manifest}" />
+		<manifest file="${mim.manifest}" mode="update">
+			<attribute name="Codebase" value="mim-cloud.appspot.com sad-fox.appspot.com coldmimu.appspot.com localhost 127.0.0.1" />
+		</manifest>
+	</target>
+
+	<property name="realAntBuild" value="false" />
+
+	<macrodef name="signJarDir">
+		<attribute name="jarDir" default="NOT SET" />
+		<attribute name="skipSpecialJars" default="true" />
+		<sequential>
+			<!-- Allows us to use the 'for' task -->
+			<taskdef resource="net/sf/antcontrib/antlib.xml">
+				<classpath>
+					<pathelement location="tools/ant-contrib-1.0b3.jar" />
+				</classpath>
+			</taskdef>
+
+			<mkdir dir="signTemp" />
+			<!-- Moves all the jars we haven't signed to signTemp and also removes existing signatures -->
+			<java classname="com.mimvista.build.JarSignHelper" failonerror="true" fork="true">
+				<arg value="@{jarDir}" />
+				<arg value="signTemp" />
+				<classpath>
+					<pathelement path="${java.class.path}" />
+					<pathelement path="build/build_classes" />
+					<pathelement path="build/min_classes" />
+					<path refid="minSrcLibs" />
+				</classpath>
+				<sysproperty key="realBuild" value="${realAntBuild}" />
+				<sysproperty key="skipSpecialJars" value="@{skipSpecialJars}" />
+				<sysproperty key="java.awt.headless" value="true" />
+			</java>
+
+			<for param="jartosign">
+				<path>
+					<fileset dir="signTemp" includes="*.jar" />
+				</path>
+				<sequential>
+					<retry retrycount="10">
+						<!-- We sign one by one because sometimes random IO errors occur and we don't want to start over at the first JAR -->
+						<!-- If you are trying to sign a jar with JDK 7+, you must add the argument 'digestalg="SHA1"' to the signjar task. -->
+						<signjar jar="@{jartosign}" keystore="tools/jarsign/keystore" alias="mim" storepass="grap3fr00t" tsaurl="http://timestamp.comodoca.com/rfc3161" />
+					</retry>
+				</sequential>
+			</for>
+
+			<copy todir="@{jarDir}">
+				<fileset dir="signTemp">
+					<include name="**/*.jar" />
+				</fileset>
+			</copy>
+
+			<delete dir="signTemp" failonerror="false" />
+		</sequential>
+	</macrodef>
+
+	<target name="signJars" depends="min_compile">
+		<signJarDir jardir="bin/lib/minJars" />
+		<signJarDir jardir="bin/lib/jars" />
+	</target>
+
+	<target name="zkm" depends="dist,combinejar,makeFakeNative,generateZkmFile">
+		<taskdef name="ZKM" classname="ZKMTask" classpath="../mim_confidential/tools/ZKM.jar" />
+		<ZKM scriptFileName="${obs.file}" logFileName="ZKM_log.txt" defaultExcludeFileName="${obs.defExclude}" defaultTrimExcludeFileName="${obs.defTrimExclude}" />
+		<move file="mim.jar" tofile="dist/mim.jar" />
+		<!--<move file="hqserver.jar" tofile="dist/hqserver.jar"/>-->
+		<move file="mim_native.jar" tofile="dist/mim_native.jar" />
+
+		<delete file="${obs.file}" />
+	</target>
+
+	<target name="fullBuildForDist" depends="zkm">
+		<retry retrycount="10">
+			<signjar jar="dist/mim.jar" keystore="tools/jarsign/keystore" alias="mim" storepass="grap3fr00t" tsaurl="http://timestamp.comodoca.com/rfc3161" />
+		</retry>
+		<retry retrycount="10">
+			<signjar jar="dist/mim_native.jar" keystore="tools/jarsign/keystore" alias="mim" storepass="grap3fr00t" tsaurl="http://timestamp.comodoca.com/rfc3161" />
+		</retry>
+	</target>
+
+	<!-- Currently, to run this, you must have mim_confidential checked out at ../mim_confidential-->
+	<target name="mantaZkm" depends="clean,silvermanta,generateZkmFile">
+		<ant antfile="../mim_confidential/build.xml" target="min_dist" dir="../mim_confidential" />
+		<echo>Finished call to mim_conf's build.xml</echo>
+		<jar jarfile="dist/mim.jar">
+			<zipfileset src="${dist.dir}/silvermanta/silvermanta.jar" />
+			<zipfileset src="../mim_confidential/min_mim_confidential.jar" />
+		</jar>
+
+		<!-- "E:/J/mim_confidential/tools/ZKM.jar"  -->
+		<!-- "../../stab/mim_confidential/tools/ZKM.jar"  -->
+		<taskdef name="ZKM" classname="ZKMTask" classpath="../mim_confidential/tools/ZKM.jar" />
+		<!-- Dummy jars to appease zkm-->
+		<jar jarfile="${dist.dir}/mim_native.jar" />
+		<ZKM scriptFileName="${obs.file}" logFileName="ZKM_log.txt" defaultExcludeFileName="${obs.defExclude}" defaultTrimExcludeFileName="${obs.defTrimExclude}" />
+		<move file="mim.jar" tofile="dist/silvermanta/silvermanta.jar" />
+		<zip destfile="${dist.dir}/manta.zip" basedir="${dist.dir}/silvermanta" />
+
+		<delete file="${obs.file}" />
+	</target>
+
+	<!--FYI this is referenced by sadfox's build-applet.xml -->
+	<target name="minjar" depends="resources,min_compile">
+		<mkdir dir="${dist.dir}" />
+		<jar jarfile="${dist.dir}/mim_min.jar">
+			<fileset dir="build/min_classes" />
+			<fileset dir="build/classes">
+				<!-- if for mimcloud applet, we don't want the whole kit and kaboodle, just english text (cloud is not localized) -->
+				<include name="*.properties" if="${mimcloud.applet}" />
+				<!-- mimcloud.applet property set in applet build.xml -->
+				<exclude name="*_*.properties" if="${mimcloud.applet}" />
+			</fileset>
+		</jar>
+	</target>
+
+	<target name="dist" depends="buildall,generateCloudJnlp,-genMimJarManifest,signJars" description="generate the distribution">
+		<!-- Create the distribution directory -->
+
+		<delete file="${dist.dir}/mim.jar" />
+		<mkdir dir="${dist.dir}" />
+		<jar jarfile="${dist.dir}/mim.jar">
+			<fileset dir="build/min_classes" />
+			<fileset dir="build/classes" excludes="**/HQServerImpl.class,**/HQServerImpl_Skel.class,**/DcmDirLicenseCreator.class,**/hqkeypair,**/hibernate.cfg.xml" />
+			<fileset dir="${build.3rdparty}" />
+		</jar>
+
+		<jar manifest="${mim.manifest}" jarfile="${dist.dir}/mim_jnlp_gui.jar">
+			<fileset dir="build/npw_classes" includes="**/DownloadServiceWindow*.class,**/DownloadServiceListenerImpl*.class" />
+			<fileset dir="resources/graphics" includes="mimviewer_cloudpro_small.jpg, mimviewer_cloud_small.jpg" />
+		</jar>
+
+		<delete file="${dist.dir}/hqserver.jar" />
+		<jar jarfile="${dist.dir}/hqserver.jar" basedir="build/classes" includes="**/HQServerImpl.class,**/HQServerImpl_Skel.class,**/hqkeypair" />
+	</target>
+
+	<target name="buildall" depends="resources,compile,clcrypt,eclipse-rmic" />
+
+	<target name="jar" depends="dist" />
+
+	<target name="clean" depends="signJars">
+		<delete dir="build" />
+		<delete dir="dist" />
+	</target>
+
+	<!-- rebuild the MIMannotationProcessors. Make sure you do this if you change them -->
+	<target name="buildAnnotationProcessorJar" depends="compile">
+		<delete file="bin/lib/testJars/MIMannotationProcessors.jar" />
+		<jar jarfile="bin/lib/testJars/MIMannotationProcessors.jar">
+			<fileset dir="tools/test_annotation_processors" />
+			<fileset dir="build/test_classes" includes="**/TestInheritanceVerifier*class" />
+		</jar>
+
+		<delete file="bin/lib/minJars/MIMFullAnnotationProcessors.jar" />
+		<jar jarfile="bin/lib/minJars/MIMFullAnnotationProcessors.jar">
+			<fileset dir="tools/annotation_processors" />
+			<fileset dir="build/classes" includes="**/AutomatorCompilationVerifier*class" />
+		</jar>
+	</target>
+
+	<target name="msiCustomizer">
+		<delete dir="build/msiCustomizerClasses" />
+		<delete file="msiCustomizerDist" />
+		<mkdir dir="build/msiCustomizerClasses" />
+		<javac srcdir="npw_src" destdir="build/msiCustomizerClasses" includes="com/mimvista/msimanipulator/**">
+		</javac>
+
+		<jar jarfile="msiCustomizerDist/msiCustomizer.jar" basedir="build/msiCustomizerClasses">
+			<manifest>
+				<attribute name="Main-Class" value="com.mimvista.msimanipulator.MSIManipulator" />
+			</manifest>
+		</jar>
+		<copy file="../mim_build/win/xml2msi/xml2msi.exe" todir="msiCustomizerDist" />
+		<copy file="../mim_build/win/xml2msi/msi2xml.exe" todir="msiCustomizerDist" />
+		<copy file="../mim_build/win/xml2msi/unicows.dll" todir="msiCustomizerDist" />
+	</target>
+
+	<target name="proxyChanger">
+		<delete dir="build/proxyChangerClasses" />
+		<delete file="proxyChangerDist" />
+		<mkdir dir="build/proxyChangerClasses" />
+		<javac srcdir="npw_src" destdir="build/proxyChangerClasses" includes="com/mimvista/proxychanger/**">
+			<classpath>
+				<pathelement path="bin/lib/minJars/gson-1.7.1.jar" />
+			</classpath>
+		</javac>
+
+		<jar jarfile="proxyChangerDist/proxyChanger.jar" basedir="build/proxyChangerClasses">
+			<manifest>
+				<attribute name="Main-Class" value="com.mimvista.proxychanger.ProxyChangeUI" />
+				<attribute name="Class-Path" value="gson-1.7.1.jar" />
+			</manifest>
+		</jar>
+		<copy file="bin/lib/minJars/gson-1.7.1.jar" todir="proxyChangerDist" />
+	</target>
+
+</project>

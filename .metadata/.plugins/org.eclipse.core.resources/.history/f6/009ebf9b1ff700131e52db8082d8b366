@@ -1,0 +1,5 @@
+package util.ui.swing;
+
+public class ImageDisplay {
+
+}

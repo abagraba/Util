@@ -1,0 +1,16 @@
+import java.io.InputStream;
+
+
+public class Chunker {
+	
+	public static Chunk nextChunk(InputStream src){
+		
+	}
+	
+	public static byte[] readBytes(InputStream src, int len){
+		byte[] data = new byte[len];
+		
+		
+	}
+	
+}

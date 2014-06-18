@@ -1,0 +1,224 @@
+package com.mimvista.cloud.shared.common;
+
+import java.io.Serializable;
+
+public abstract class FoxExceptions extends Exception {
+	static {
+		Messages.putMessage("en", FoxExceptions.class, "INSUFFICIENT_PERMS_DEFAULT", "Insufficient permissions to do that!");
+		Messages.putMessage("en", FoxExceptions.class, "INHERITED_ADMIN_DEFAULT", "You can not remove an inherited admin from a group");
+		Messages.putMessage("en", FoxExceptions.class, "IN_USE_DEFAULT", "What you are attempting to modify is currently in use.");
+	}
+	
+	private static final long serialVersionUID = 1L;
+	
+	public FoxExceptions() {
+		
+	}
+	
+	public FoxExceptions(Throwable threw) {
+		super(threw);
+	}
+	
+	public FoxExceptions(String message) {
+		super(message);
+	}
+	
+	public FoxExceptions(String message, Throwable threw) {
+		super(message, threw);
+	}
+	
+	
+	
+	public static class SessionTimeoutException extends FoxExceptions implements Serializable {
+		private static final long serialVersionUID = 1L;
+		
+		private String followUrl;
+		
+		@SuppressWarnings("unused") private SessionTimeoutException() {}
+		
+		public SessionTimeoutException(String followUrl, String message) {
+			super(message);
+			this.followUrl = followUrl;
+		}
+		
+		public String getFollowUrl() {
+			return followUrl;
+		}
+	}
+	
+	public static class InsufficientPermissionsException extends FoxExceptions implements Serializable {
+		private static final long serialVersionUID = 1L;
+
+		public InsufficientPermissionsException() {
+			super(Messages.getString(FoxExceptions.class, "INSUFFICIENT_PERMS_DEFAULT"));
+		}
+		
+		public InsufficientPermissionsException(String message) {
+			super(message);
+		}
+	}
+	
+	public static class InheritedAdminException extends FoxExceptions implements Serializable {
+		private static final long serialVersionUID = 1L;
+		
+		public InheritedAdminException(){
+			super(Messages.getString(FoxExceptions.class, "INHERITED_ADMIN_DEFAULT"));
+		}
+		
+		public InheritedAdminException(String message){
+			super(message);
+		}
+	}
+	
+	public static class InUseException extends FoxExceptions implements Serializable {
+		private static final long serialVersionUID = 1L;
+		
+		public InUseException() {
+			super(Messages.getString(FoxExceptions.class, "IN_USE_DEFAULT"));
+		}
+		
+		public InUseException(String message) {
+			super(message);
+		}
+	}
+	
+	public static class InvalidDecryptionPasswordException extends FoxExceptions implements Serializable {
+		private static final long serialVersionUID = 1L;
+		private boolean canRetryLogin = false;
+
+		public InvalidDecryptionPasswordException() { }
+		
+		public InvalidDecryptionPasswordException(String message) {
+			super(message);
+		}
+		
+		public InvalidDecryptionPasswordException(String message, boolean retryLogin) {
+			super(message);
+			canRetryLogin = retryLogin;
+		}
+		
+		public InvalidDecryptionPasswordException(Throwable threw) {
+			super(threw);
+		}
+
+		public InvalidDecryptionPasswordException(String message, Throwable threw) {
+			super(message, threw);
+		}
+		
+		public boolean canRetryLogin(){
+			return canRetryLogin;			
+		}
+	}
+	
+	public static class AccountDoesNotExistException extends FoxExceptions implements Serializable {
+		private static final long serialVersionUID = 1L;
+		
+		public AccountDoesNotExistException() {}
+		
+		public AccountDoesNotExistException(String message) {
+			super(message);
+		}
+	}
+	
+	public static class InvalidPaymentException extends FoxExceptions implements Serializable {
+		private static final long serialVersionUID = 1L;
+		
+		public InvalidPaymentException() {}
+		
+		public InvalidPaymentException(String message) {
+			super(message);
+		}
+	}
+	
+	public static class MissingBrainTreeIdException extends InvalidPaymentException implements Serializable {
+		private static final long serialVersionUID = 1L;
+		
+		public MissingBrainTreeIdException() {}
+		
+		public MissingBrainTreeIdException(String message) {
+			super(message);
+		}	
+	}
+	
+	public static class UserNotManagedException extends FoxExceptions implements Serializable {
+		private static final long serialVersionUID = 1L;
+		
+		public UserNotManagedException(){}
+		
+		public UserNotManagedException(String message) {
+			super(message);
+		}
+	}
+	
+	public static class UserAlreadyManagedException extends FoxExceptions implements Serializable {
+		private static final long serialVersionUID = 1L;
+		
+		public UserAlreadyManagedException(){}
+		
+		public UserAlreadyManagedException(String message) {
+			super(message);
+		}
+	}
+	
+	public static class UserUnmanageableException extends FoxExceptions implements Serializable {
+		private static final long serialVersionUID = 1L;
+		
+		private Reason reason;
+		
+		public UserUnmanageableException(){
+			this.reason = Reason.UNKNOWN;
+		}
+		
+		public UserUnmanageableException(String message) {
+			super(message);
+			this.reason = Reason.UNKNOWN;
+		}
+		
+		public UserUnmanageableException(Reason reason){
+			this.reason = reason;
+		}
+		
+		public Reason getReason(){
+			return reason;
+		}
+		
+		public static enum Reason{
+			USER_IS_ADMIN, USER_OWNS_STUDIES, USER_SPANS_HIERARCHIES, UNKNOWN;
+		}
+	}
+	
+	public static class CantReadAssistantTokenException extends FoxExceptions implements Serializable {
+		private static final long serialVersionUID = 1L;
+		
+		public CantReadAssistantTokenException() {
+			super("The server was unable to parse the Assistant token properly");
+		}
+		
+		public CantReadAssistantTokenException(String message) {
+			super(message);
+		}
+		
+	}
+	
+	public static class InvalidAssistantUserAccountException extends FoxExceptions implements Serializable {
+		private static final long serialVersionUID = 1L;
+		
+		public InvalidAssistantUserAccountException() {
+			super("The Assistant account is in a state that it should never be in");
+		}
+		
+		public InvalidAssistantUserAccountException(String message) {
+			super(message);
+		}
+		
+	}
+	
+	public static class AddingPatientToGroupException extends FoxExceptions implements Serializable {
+		private static final long serialVersionUID = 1L;
+
+		public AddingPatientToGroupException(){
+			super("Cannot add a patient to a group");
+		}
+		
+	}
+}

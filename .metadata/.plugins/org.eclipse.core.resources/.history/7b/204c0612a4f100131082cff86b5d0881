@@ -1,0 +1,161 @@
+package com.mimvista.cloud.organizer.verifier.content;
+
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.border.EmptyBorder;
+import javax.swing.event.TableModelListener;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableModel;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+import com.mimvista.cloud.organizer.verifier.TestFrame;
+import com.mimvista.cloud.organizer.verifier.content.VerifierSearchResultView.VerifierSearchResultViewEnum;
+import com.mimvista.cloud.organizer.verifier.proui.Navigable;
+import com.mimvista.cloud.organizer.verifier.proui.SwapPanel;
+import com.mimvista.dicom.devices.dump.gui.TableColumnAdjuster;
+import com.mimvista.preferencesNew.MIMCloudOrganizerPrefs;
+
+public class VerifierSearchResultDisplay extends JScrollPane implements Navigable {
+
+	private static final long serialVersionUID = 1L;
+	private JTable table;
+	private TableColumnAdjuster tca;
+
+	private List<VerifierSearchResultView> results;
+
+	private SwapPanel swapPanel;
+
+	private JButton openOptions;
+	private JButton save;
+	private JButton finish;
+
+	private VerifierSearchResultViewEnum[] settings;
+
+	private int border = 100;
+
+	public VerifierSearchResultDisplay(SwapPanel swapPanel, List<VerifierSearchResultView> results) {
+		this.swapPanel = swapPanel;
+		this.results = results;
+		setBorder(new EmptyBorder(border, border, border, border));
+
+		openOptions = new JButton("View Options");
+		openOptions.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				VerifierSearchResultDisplayOption options = new VerifierSearchResultDisplayOption(TestFrame.instance, VerifierSearchResultDisplay.this);
+				updateModel();
+			}
+		});
+
+		finish = new JButton("Finish");
+		finish.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				VerifierSearchResultDisplay.this.swapPanel.swapTo(null);
+			}
+		});
+
+		table = new JTable();
+		table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+		table.setAutoCreateRowSorter(true);
+		setViewportView(table);
+		table.setModel(getModel());
+		tca = new TableColumnAdjuster(table);
+		updateModel();
+	}
+
+	public void updateModel() {
+		readSettings();
+		table.setModel(getModel());
+		tca.adjustColumns();
+		table.repaint();
+	}
+
+	public void readSettings() {
+		String[] saved = MIMCloudOrganizerPrefs.resultDisplayColumns.getValue();
+		settings = new VerifierSearchResultViewEnum[saved.length];
+		int i = 0;
+		for (String save : saved) {
+			settings[i++] = VerifierSearchResultViewEnum.valueOf(save);
+		}
+	}
+
+	private TableModel getModel() {
+		return new TableModel() {
+
+			@Override
+			public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+
+			}
+
+			@Override
+			public void removeTableModelListener(TableModelListener l) {
+
+			}
+
+			@Override
+			public boolean isCellEditable(int rowIndex, int columnIndex) {
+				return false;
+			}
+
+			@Override
+			public Object getValueAt(int rowIndex, int columnIndex) {
+				return settings[columnIndex].getValue(VerifierSearchResultDisplay.this.results.get(rowIndex));
+			}
+
+			@Override
+			public int getRowCount() {
+				return VerifierSearchResultDisplay.this.results.size();
+			}
+
+			@Override
+			public String getColumnName(int columnIndex) {
+				return settings[columnIndex].toString();
+			}
+
+			@Override
+			public int getColumnCount() {
+				return settings.length;
+			}
+
+			@Override
+			public Class<?> getColumnClass(int columnIndex) {
+				return TableColumn.class;
+			}
+
+			@Override
+			public void addTableModelListener(TableModelListener l) {
+
+			}
+		};
+	}
+
+	@Override
+	public int numButtons() {
+		return 3;
+	}
+
+	@Override
+	public JButton getButton(int i) {
+		switch (i) {
+			case 0:
+				return openOptions;
+			case 1:
+				return save;
+			case 2:
+				return finish;
+		}
+		return null;
+	}
+
+}

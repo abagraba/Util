@@ -1,0 +1,532 @@
+package com.mimvista.cloud.shared.common;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import com.mimvista.cloud.shared.common.enums.FoxEnums.CrudAction;
+
+
+
+public class Wurly {
+	public static final String mainLocation = "/main/";
+	public static final String tokenPrefix = "#";
+	public static final String entityDelim = "!";
+	public static final String baseLocation = "/";
+	public static final List<Wurly> allWurlies = new ArrayList<Wurly>();
+
+	/* Tasks */
+	public static TaskWurly STUDY_SWEEPER = new TaskWurly("studySweep");
+	public static final String STUDY_SWEEP_TYPE_PARAM = "sweepType";
+	public static final String CURSOR_PARAM = "cursor";
+
+	public static TaskWurly POSTMAN = new TaskWurly("postman");
+	public static final String POSTMAN_MESSAGE_TYPE_PARAM = "messageType";
+	public static final String POSTMAN_USER_PARAM = "userToWarn";
+
+	public static TaskWurly STUDY_DELETION = new TaskWurly("studyFinalDelete");
+	public static final String STUDY_DELETION_KEY_PARAM = "studyKey";
+
+	public static TaskWurly ACCOUNT_DELETION = new TaskWurly("closeAccount");;
+	public static final String ACCOUNT_DELETION_KEY_PARAM = "accountKey";
+	
+	public static TaskWurly HEADLESS_COMM = new TaskWurly("headlessCommunication");
+	public static final String HEADLESS_COMM_MESSAGE_TYPE_PARAM = "messageType";
+	
+	public static TaskWurly BIGQUERY_MAIN_QUEUE = new TaskWurly("bigquerymain");
+	public static final String BIGQUERY_QUERY_PARAM = "queryString";
+	public static final String BIGQUERY_QUERY_CONTAINER_ID = "containerId";
+	
+	public static TaskWurly BIGQUERY_QUERY_QUEUE = new TaskWurly("bigqueryquery");
+
+	/* Billing */
+	public static BillingWurly INIT_PRICES = new BillingWurly("initPrices");
+	public static BillingWurly INIT_BILL_ADVANCER = new BillingWurly("initBillAdvancer");
+	
+	public static BillingWurly START_BILLING = new BillingWurly("start");
+	public static BillingWurly CREATE_BILLS_DONE_CALLBACK = new BillingWurly("createBillsDone");
+	public static BillingWurly ADD_EVENTS_TO_BILLS_DONE_CALLBACK = new BillingWurly("addEventsToBillsDone");
+	public static BillingWurly PREP_BILLS_DONE_CALLBACK = new BillingWurly("prepBillsDone");
+	public static BillingWurly UPLOAD_BILLS_DONE_CALLBACK = new BillingWurly("uploadBillsDone");
+	public static BillingWurly CHECK_BILLS_PROCESSED = new BillingWurly("checkBillsProcessed");
+	public static BillingWurly CHECK_BILLS_PROCESSED_DONE_CALLBACK = new BillingWurly("checkBillsProcessedDone");
+	public static BillingWurly SETTLE_BILLS_DONE_CALLBACK = new BillingWurly("settleBillsDone");
+	public static BillingWurly CHECK_SETTLED = new BillingWurly("checkSettled");
+	public static BillingWurly CHECK_SETTLED_DONE_CALLBACK = new BillingWurly("checkSettledDone");
+	public static BillingWurly RECEIPT_SYSTEM = new BillingWurly("receipt");
+	public static BillingWurly BILLING_DONE = new BillingWurly("done");
+	
+	/* GWT Access to Billing stuff */
+	public static final MainEntityServiceWurly BILLING_RPC = new MainEntityServiceWurly("billingRPC");
+
+	/* Billing Failure Recovery */
+	public static BillingWurly ADVANCE_BILLS_TO_DATE = new BillingWurly("advanceBillsToDate");
+	public static BillingWurly BILL_ADVANCER_CREATE_BILLS_DONE_CALLBACK = new BillingWurly("billAdvancerCreateBillsDone");
+	public static BillingWurly BILL_ADVANCER_ADD_EVENTS_TO_BILLS_DONE_CALLBACK = new BillingWurly("billAdvancerAddEventsToBillsDone");
+	public static BillingWurly SCHEDULE_DELETE_STORAGE_FEES = new BillingWurly("scheduleDeleteStorageFees");
+	public static BillingWurly DELETE_STORAGE_FEES_TASK = new BillingWurly("deleteStorageFees");
+
+	/* Anonymous access allowed */
+	public static Wurly HOME = new Wurly("home");
+	public static ServiceWurly UPDATE = new ServiceWurly("autoupdate");
+	public static ActivationWurly ACTIVATION = new ActivationWurly("activation");
+	public static PasswordResetWurly RESET_PASS = new PasswordResetWurly("resetpassword");
+	public static PindropRedeemWurly REDEEM_PINDROP = new PindropRedeemWurly("/studies/redeemPindrop");
+	public static CloudWurly LOGIN = new CloudWurly("logIn");
+	public static CloudWurly LOGOUT = new CloudWurly("logOut");
+	public static ServiceWurly REGISTER = new ServiceWurly("signUp");
+	public static ServiceWurly GET_CONTEXT = new ServiceWurly("getContext");
+	public static MainEntityServiceWurly ADMIN = new MainEntityServiceWurly("admin");
+	public static MainServiceWurly FABIOGRATION = new MainServiceWurly("groupification");
+	public static MainEntityServiceWurly CONTRACT_USAGE = new MainEntityServiceWurly("contractusage");
+	
+	/* MIM commands */
+	public static MIMWurly MIM_LOGIN = new MIMWurly("logIn");
+	public static MIMWurly MIM_LOGOUT = new MIMWurly("logOut");
+	public static MIMWurly MIM_AM_LOGGED_IN = new MIMWurly("amLoggedIn");
+	public static MIMWurly MIM_GET_AUTH_TOKEN = new MIMWurly("getAuthToken");
+	public static MIMWurly MIM_GET_KEYPAIR = new MIMWurly("getKeypair");
+	public static MIMWurly MIM_GET_ACCOUNT_SUMMARY = new MIMWurly("getAccountSummary");
+	public static MIMWurly MIM_GET_ACCOUNT_SUMMARIES = new MIMWurly("getAccountSummaries");
+	public static MIMWurly MIM_STORE_FILE = new MIMWurly("storeFile");
+	public static MIMWurly MIM_GET_FILE = new MIMWurly("getFile");
+	public static MIMWurly MIM_SEARCH_STUDIES = new MIMWurly("searchStudies");
+	public static MIMWurly MIM_SEARCH_STUDIES_MASKUID = new MIMWurly("searchStudiesMaskedUID");
+	public static MIMWurly MIM_SEARCH_STUDIES_MASKUID_SERIES = new MIMWurly("searchStudiesMaskedSeriesUID");
+	public static MIMWurly MIM_SEARCH_GET_LEFTOVERS = new MIMWurly("getSearchLeftovers");
+	public static MIMWurly MIM_GET_STUDY_DBKEYID = new MIMWurly("getStudyByDbKeyId");
+	public static MIMWurly MIM_GET_REF_SERIES = new MIMWurly("getStudiesByReferencing");
+	public static MIMWurly MIM_GET_GROUPS_I_ADMIN = new MIMWurly("getGroupsIAdmin");
+
+	public static MIMWurly MIM_PRE_UPLOAD = new MIMWurly("preUpload");
+	public static MIMWurly MIM_POST_UPLOAD = new MIMWurly("postUpload");
+	public static MIMWurly MIM_PRE_DOWNLOAD = new MIMWurly("preDownload");
+	public static MIMWurly MIM_POST_DOWNLOAD = new MIMWurly("postDownload");
+	public static MIMWurly MIM_CONFIRM_VIEW = new MIMWurly("viewConfirm");
+	public static MIMWurly MIM_STUDY_ACTIONS = new MIMWurly("studyActions");
+	public static MIMWurly MIM_STUDY_MODIFIES = new MIMWurly("studyMods");
+	public static MIMWurly MIM_SERIES_MODIFIES = new MIMWurly("seriesMods");
+	public static MIMWurly MIM_GET_ACCOUNT_INFO = new MIMWurly("getAccountInfo");
+	public static MIMWurly MIM_ACCEPT_TOS = new MIMWurly("acceptTOS");
+	public static MIMWurly MIM_GET_TOS = new MIMWurly("getTOS");
+	public static MIMWurly CHANGE_PASSWORD = new MIMWurly("changePassword");
+	public static MIMWurly CLAIM_ROBOT_USER = new MIMWurly("claimRobotUser");
+	public static MIMWurly GET_ROBOT_FIELDS = new MIMWurly("getRobotFields");
+	public static MIMWurly DELETE_ROBOT_USER = new MIMWurly("deleteEndpoint");
+	public static MIMWurly GET_GROUP_HIERARCHY = new MIMWurly("getGroupHierarchy");
+	public static MIMWurly CREATE_ROBOT_USER = new MIMWurly("createRobotUser");
+	public static MIMWurly REQUEST_CREDENTIAL_TOKEN = new MIMWurly("requestCredentialToken");
+	public static MIMWurly REDEEM_CREDENTIAL_TOKEN = new MIMWurly("redeemCredentialToken");
+	public static MIMWurly SEND_PASSWORD_RESET_TOKEN = new MIMWurly("resetPassword");
+	public static MIMWurly MIM_ADD_CONTACT = new MIMWurly("addContact");
+	public static MIMWurly MIM_ADD_ROBOT_MEMBERSHIP = new MIMWurly("addRobotMembership");
+	public static MIMWurly MIM_REMOVE_CONTACT = new MIMWurly("removeContact");
+	public static MIMWurly MIM_REMOVE_MEMBERSHIP = new MIMWurly("removeMembership");
+	
+	public static MIMWurly MIM_CRYPT = new MIMWurly("crypt");
+	public static MIMWurly MIM_GET_CHAIN = new MIMWurly("getChain");
+	public static MIMWurly MIM_FIX_STUDIES = new MIMWurly("fixStudies");
+	public static MIMWurly MIM_GET_S3_SERIES_ID = new MIMWurly("getS3SeriesID");
+
+	public static VuemeWurly VUEME_GET_PIN = new VuemeWurly("getCurrentPin");
+	public static VuemeWurly VUEME_RESET_PIN = new VuemeWurly("resetPin");
+	public static VuemeWurly VUEME_REGISTER_USER = new VuemeWurly("registerAccount");
+
+	public static CloudWurly CLEAN_FAILURES = new CloudWurly("cleanFailures");
+	public static CloudWurly STUDY_INDEX_UPDATER = new CloudWurly("studyIndexUpdater");
+
+	/* Authentication required past this point */
+	public static MainWurly MAIN_HOME = new MainWurly("home");
+
+	public static MainWurly LIST_GROUPS = new MainWurly("listGroups");
+	public static MainWurly GROUPIFY = new MainWurly("groupifyMyAccount");
+	public static MainServiceWurly AUTH_TOKEN = new MainServiceWurly("authToken");
+	public static MainEntityServiceWurly STUDY_SEARCH = new MainEntityServiceWurly("studySearch");
+	public static MainEntityServiceWurly STUDY_ACTION = new MainEntityServiceWurly("studyAction");
+	public static MainEntityServiceWurly GROUP_CRUD = new MainEntityServiceWurly("groupCrud");
+	public static MainEntityServiceWurly MEMBER_CRUD = new MainEntityServiceWurly("memberCrud");
+	public static MainEntityServiceWurly GET_ACCOUNT = new MainEntityServiceWurly("getAccount");
+	public static MainEntityServiceWurly GET_REGISTRATION = new MainEntityServiceWurly("getRegistration");
+	public static MainEntityServiceWurly ASSISTANT = new MainEntityServiceWurly("assistantService");
+	public static MainEntityWurly GET_ACCOUNT_SUMMARY = new MainEntityWurly("getAccountSummary");
+	public static MainEntityServiceWurly ROLE_CRUD = new MainEntityServiceWurly("roleCrud");
+	public static MainEntityWurly MANAGE_ROLES = new MainEntityWurly("manageRoles");
+	public static MainEntityServiceWurly MANAGE_USERS = new MainEntityServiceWurly("manageUsers");
+	public static MainEntityServiceWurly MANAGE_GROUPS = new MainEntityServiceWurly("manageHierarchy");
+	public static MainEntityServiceWurly STUDY_SERVICES = new MainEntityServiceWurly("studyServices");
+	public static MainEntityServiceWurly CONTACT_CRUD = new MainEntityServiceWurly("contactsCrud");
+	public static MainEntityServiceWurly RECAPTCHA = new MainEntityServiceWurly("recaptcha");
+	public static MainEntityServiceWurly STUDY_INFO = new MainEntityServiceWurly("studyInfo");
+	public static MainEntityServiceWurly VIEWER_TOKEN = new MainEntityServiceWurly("viewertokenservice");
+	public static MainEntityServiceWurly ADMIN_UPDATE_EMAIL_SERVICE = new MainEntityServiceWurly("adminsendupdateemails");
+	public static ServiceWurly MAINTENANCE = new ServiceWurly("maintenance");
+
+	public static MainEntityServiceWurly USER_CRUD = new MainEntityServiceWurly("userCrud");
+	public static MainEntityWurly USER_SECURITY = new MainEntityWurly("updateSecurity");
+	public static MainEntityWurly LIST_CONTACTS = new MainEntityWurly("contactCrud");
+	public static MainEntityServiceWurly NOTIFICATION_CRUD = new MainEntityServiceWurly("notificationCrud");
+	public static MainWurly LIST_INBOX_NOTIFICATIONS = new MainWurly("listInbox");
+	public static MainWurly LIST_SENT_NOTIFICATIONS = new MainWurly("listSent");
+
+	public static MainEntityServiceWurly PAYMENT = new MainEntityServiceWurly("payment");
+
+	public static MainEntityWurly UPLOAD_STUDIES = new MainEntityWurly("uploadStudies");
+	public static MainEntityWurly LIST_STUDIES = new MainEntityWurly("listStudies");
+	public static MainEntityWurly LIST_ARCHIVE = new MainEntityWurly("listArchive");
+	public static MainEntityWurly LIST_TRASH = new MainEntityWurly("listTrash");
+	public static MainServiceWurly STUDY_LISTER = new MainServiceWurly("studyList");
+	public static MainEntityServiceWurly ADMIN_PAGE = new MainEntityServiceWurly("adminPage");
+	public static MainServiceWurly MOBILE_REG_CRUD = new MainServiceWurly("mobileRegCrud");
+	public static MainServiceWurly TOS_SERVICE = new MainServiceWurly("acceptTOS");
+	public static MainEntityServiceWurly FIX_STUDY = new MainEntityServiceWurly("fixStudy");
+
+	public static MainEntityServiceWurly PINDROP_CRUD = new MainEntityServiceWurly("pindropCrud");
+	public static MainEntityServiceWurly SLINGER_CRUD = new MainEntityServiceWurly("slingerCrud");
+	public static MainEntityServiceWurly DROPBOX_SERVICE = new MainEntityServiceWurly("dropboxService");
+	
+	public static MainEntityServiceWurly BIGQUERY_SERIVCE = new MainEntityServiceWurly("bigquery");
+	
+	public static MainEntityWurly LIST_PINDROP = new MainEntityWurly("listPindrop");
+	
+	public static MainServletWurly DOWNLOAD_STATEMENT = new MainServletWurly("downloadStatement");
+
+	/* Slinger */
+	public static SlingerWurly SLINGER_AUTH_TOKEN = new SlingerWurly("getAuthToken");
+	public static SlingerWurly SLINGER_PULL_CONFIGS = new SlingerWurly("pullConfigs");
+	public static SlingerWurly SLINGER_WARN_BAD_PAY = new SlingerWurly("warnBadPay");
+	public static SlingerWurly SLINGER_CANT_MAKE_BUNDLE = new SlingerWurly("cantMakeBundle");
+
+	public static Wurly FORGOT_PASS = new Wurly("forgotPassword");
+
+	protected String token;
+
+	private Wurly(String token) {
+		this.token = token;
+		allWurlies.add(this);
+	}
+
+	protected String getBaseLocation() {
+		return baseLocation;
+	}
+
+	public String getLocation() {
+		return getBaseLocation();
+	}
+
+	public String getToken() {
+		return token;
+	}
+
+	public String getTokenLocation() {
+		return getLocation() + tokenPrefix + getToken();
+	}
+
+	public boolean isFor(String token) {
+		return this.token.equals(token);
+	}
+
+	public boolean isForCrud(String token, CrudAction crudAction) {
+		return this.token.equals(crudAction.getPrefix() + token);
+	}
+
+	public boolean isMainLocation() {
+		return false;
+	}
+
+	public boolean requiresLogin(String url) {
+		return isFor(url) && isMainLocation();
+	}
+
+	public String getCrudToken(CrudAction crudAction) {
+		return crudAction.getPrefix() + getToken();
+	}
+
+	public String getCrudTokenLocation(CrudAction crudAction) {
+		return getLocation() + tokenPrefix + getCrudToken(crudAction);
+	}
+
+
+
+
+	public static class MainWurly extends Wurly {
+		public MainWurly(String token) {
+			super(token);
+		}
+
+		@Override
+		protected String getBaseLocation() {
+			return mainLocation;
+		}
+
+		@Override
+		public boolean isMainLocation() {
+			return true;
+		}
+	}
+
+	public static class ServiceWurly extends Wurly {
+		protected String svcloc;
+
+		public ServiceWurly(String token) {
+			super(token);
+			svcloc = getBaseLocation() + token;
+		}
+
+		public String getSvcLoc() {
+			return svcloc;
+		}
+	}
+
+	/** Constructs URL of the form: /tasks/[token from constructor] */
+	public static class TaskWurly extends Wurly {
+		public static final String taskBaseLocation = baseLocation + "tasks/";
+
+		protected String taskLoc;
+
+		public TaskWurly(String token) {
+			super(token);
+			taskLoc = taskBaseLocation + token;
+		}
+
+		@Override
+		public String getLocation() {
+			return taskLoc;
+		}
+	}
+
+	public static class MainServiceWurly extends ServiceWurly {
+		public MainServiceWurly(String token) {
+			super(token);
+		}
+
+		@Override
+		protected String getBaseLocation() {
+			return mainLocation;
+		}
+
+		@Override
+		public boolean isMainLocation() {
+			return true;
+		}
+	}
+
+	public static class MainServletWurly extends MainWurly {
+		public MainServletWurly(String token) {
+			super(token);
+		}
+		
+		@Override
+		public String getTokenLocation() {
+			return getBaseLocation() + getToken();
+		}
+		
+	}
+	
+	public static class EntityWurly extends Wurly {
+		public EntityWurly(String token) {
+			super(token);
+		}
+
+		@Override
+		public boolean isFor(String token) {
+			return token.startsWith(getToken());
+		}
+
+		@Override
+		public boolean isForCrud(String token, CrudAction crudAction) {
+			return token.startsWith(crudAction.getPrefix() + getToken());
+		}
+
+		public String getTokenForEntity(Long id) {
+			return getToken() + entityDelim + id;
+		}
+
+		public String getCrudTokenForEntity(Long id, CrudAction crudAction) {
+			return getCrudToken(crudAction) + entityDelim + id;
+		}
+
+		public Long getEntityId(String token) {
+			Long id = null;
+			try {
+				String[] split = token.split(entityDelim);
+				id = Long.valueOf(split[1]);
+			} catch (Exception e) {}
+			return id;
+		}
+
+		public String getTokenLocationForEntity(Long id) {
+			return super.getTokenLocation() + entityDelim + id;
+		}
+
+		public String getCrudTokenLocationForEntity(Long id, CrudAction crudAction) {
+			return super.getCrudTokenLocation(crudAction) + entityDelim + id;
+		}
+	}
+
+	public static class EntityServiceWurly extends EntityWurly {
+		protected String svcloc;
+
+		public EntityServiceWurly(String token) {
+			super(token);
+			svcloc = getBaseLocation() + token;
+		}
+
+		public String getSvcLoc() {
+			return svcloc;
+		}
+	}
+
+	public static class MainEntityWurly extends EntityWurly {
+		public MainEntityWurly(String token) {
+			super(token);
+		}
+
+		@Override
+		protected String getBaseLocation() {
+			return mainLocation;
+		}
+
+		@Override
+		public boolean isMainLocation() {
+			return true;
+		}
+	}
+
+	public static class MainEntityServiceWurly extends MainEntityWurly {
+		protected String svcloc;
+
+		public MainEntityServiceWurly(String token) {
+			super(token);
+			svcloc = getBaseLocation() + token;
+		}
+
+		public String getSvcLoc() {
+			return svcloc;
+		}
+	}
+
+
+	public static class PindropRedeemWurly extends MainServiceWurly {
+		public PindropRedeemWurly(String token) {
+			super(token);
+		}
+
+		@Override
+		public boolean isFor(String token) {
+			return token.startsWith(getToken());
+		}
+
+		public String getTokenForHexcode(String hexcode) {
+			return getToken() + entityDelim + hexcode;
+		}
+
+		public String getHexcode(String token) {
+			String hexcode = null;
+			try {
+				String[] split = token.split(entityDelim);
+				hexcode = split[1];
+			} catch (Exception e) {}
+			return hexcode;
+		}
+
+		public String getTokenLocationForHexcode(String hexcode) {
+			return super.getTokenLocation() + ";redeem=" + hexcode;
+		}
+	}
+
+	public static class PasswordResetWurly extends ServiceWurly {
+
+		public PasswordResetWurly(String token) {
+			super(token);
+			svcloc = getBaseLocation() + token;
+		}
+
+		@Override
+		public boolean isFor(String token) {
+			return token.startsWith(this.token);
+		}
+	}
+
+	public static class ActivationWurly extends ServiceWurly {
+		public static enum ActivationResult {
+			SUCCESS("Success"), EXPIRED("Expired"), USED("Used"), BAD("Bad");
+
+			public final String token;
+			ActivationResult(String token) {
+				this.token = token;
+			}
+		}
+
+		private ActivationWurly(String token) {
+			super(token);
+			svcloc = getBaseLocation() + token;
+		}
+
+		@Override
+		public boolean isFor(String token) {
+			return token.startsWith(this.token);
+		}
+
+		public String getTokenLocation(ActivationResult result) {
+			if (result == null) {
+				result = ActivationResult.BAD;
+			}
+			return getLocation() + tokenPrefix + token + result.token;
+		}
+
+		public ActivationResult getResult(String token) {
+			for (ActivationResult result : ActivationResult.values()) {
+				if ((this.token + result.token).equals(token)) {
+					return result;
+				}
+			}
+			return ActivationResult.BAD;
+		}
+	}
+
+	public static class CloudWurly extends ServiceWurly {
+		public static final String cloudService = baseLocation + "cloud/";
+
+		private CloudWurly(String token) {
+			super(token);
+			svcloc = cloudService + token;
+		}
+	}
+
+	public static class MIMWurly extends ServiceWurly {
+		public static final String mimService = baseLocation + "mim/";
+
+		public MIMWurly(String token) {
+			super(token);
+			svcloc = mimService + token;
+		}
+
+	}
+
+	public static class SlingerWurly extends ServiceWurly {
+		public static final String slingerService = baseLocation + "slinger/";
+
+		public SlingerWurly(String token) {
+			super(token);
+			svcloc = slingerService + token;
+		}
+	}
+
+	public static class VuemeWurly extends ServiceWurly {
+		public static final String vumeService = baseLocation + "vueme/";
+
+		public VuemeWurly(String token) {
+			super(token);
+			svcloc = vumeService + token;
+		}
+	}
+
+	/** Constructs URL of the form: /tasks/billing/[token from constructor] */
+	public static class BillingWurly extends TaskWurly {
+		public static final String billingBaseLocation = taskBaseLocation + "billing/";
+
+		public BillingWurly(String token) {
+			super(token);
+			taskLoc = billingBaseLocation + token;
+		}
+	}
+}

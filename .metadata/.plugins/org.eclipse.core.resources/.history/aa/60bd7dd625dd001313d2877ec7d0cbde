@@ -1,0 +1,9 @@
+package Organizer.UI;
+
+import java.awt.Color;
+
+public class ColorTheme {
+
+	public static Color borderColor = new Color(128, 128, 128);
+	
+}

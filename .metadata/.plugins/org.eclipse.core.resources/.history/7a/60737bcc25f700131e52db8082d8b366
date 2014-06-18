@@ -1,0 +1,20 @@
+package util.ui.swing;
+
+import java.awt.Rectangle;
+
+public abstract class View {
+
+	/**
+	 * Gets the minimum and maximum bounds of the view. If the bounds are stored
+	 * as a Rectangle, this should return a copy of it.
+	 */
+	public abstract Rectangle getViewBounds();
+
+	/**
+	 * Sets the minimum and maximum bound of the view. Calls {@link #setViewBounds(int, int, int, int)}
+	 * 
+	 */
+	public abstract void setViewBounds(Rectangle bounds);
+
+	public abstract void setViewBounds(int xMin, int yMin, int width, int height);
+}

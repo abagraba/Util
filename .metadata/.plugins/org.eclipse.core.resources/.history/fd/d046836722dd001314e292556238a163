@@ -1,0 +1,410 @@
+package com.mimvista.cloud.client.main.groups;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import com.google.gwt.cell.client.Cell;
+import com.google.gwt.cell.client.ClickableTextCell;
+import com.google.gwt.cell.client.FieldUpdater;
+import com.google.gwt.cell.client.SafeHtmlCell;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Cursor;
+import com.google.gwt.dom.client.Style.TextDecoration;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiFactory;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.cellview.client.CellTable;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.user.client.ui.InlineLabel;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.UIObject;
+import com.google.gwt.user.client.ui.Widget;
+import com.mimvista.cloud.client.CredentialManager;
+import com.mimvista.cloud.client.JsWindow;
+import com.mimvista.cloud.client.JsWindow.JsPopupsDisabledException;
+import com.mimvista.cloud.client.JsWindow.JsWindowOptions;
+import com.mimvista.cloud.client.SadFoxEntryPoint;
+import com.mimvista.cloud.client.Services;
+import com.mimvista.cloud.client.callbacks.SadFoxCallbackWrapper;
+import com.mimvista.cloud.client.main.groups.AssistantConfigForm.AssistantTabPage;
+import com.mimvista.cloud.client.widgets.FoxButton;
+import com.mimvista.cloud.client.widgets.FoxButton.FoxButtonable;
+import com.mimvista.cloud.client.widgets.FoxFormPager;
+import com.mimvista.cloud.client.widgets.ListFormCellTable;
+import com.mimvista.cloud.client.widgets.cells.FoxButtonCell;
+import com.mimvista.cloud.shared.common.FoxUtil;
+import com.mimvista.cloud.shared.common.Messages;
+import com.mimvista.cloud.shared.common.RobotInfo;
+import com.mimvista.cloud.shared.common.enums.AccountEnums.AccountStatus;
+import com.mimvista.cloud.shared.common.mim.SlingerConfigInfo;
+
+public class AssistantConfigListForm extends Composite implements AssistantConfigFormPage {
+
+	private static AssistantConfigListFormUiBinder uiBinder = GWT.create(AssistantConfigListFormUiBinder.class);
+	interface AssistantConfigListFormUiBinder extends UiBinder<Widget, AssistantConfigListForm> {}
+	
+	@UiField HTMLPanel installationsListPanel;
+	@UiField FoxButton downloadButton;
+	@UiField Label noPermissions;
+	@UiField ListFormCellTable<RobotInfo> cellTable;
+	@UiField Label noInstallationsLabel;
+	@UiField Label assistantInfo;
+	@UiField(provided=true) FoxFormPager pager;
+	@UiField FoxButton createButton;
+	@UiField FoxButton trashSelectedButton;
+	@UiField InlineLabel assistantInfo1;
+	@UiField InlineLabel assistantInfo2;
+	@UiField InlineLabel assistantInfo3;
+	@UiField HTML setupNoteAssistant;
+	@UiField HTML setupNoteMCA;
+	
+	public static final String mcaUrl = SadFoxEntryPoint.get().getContext().getDomainContext().isProduction() ? "http://www.mimsoftware.com/download/mca" : SadFoxEntryPoint.get().getContext().getDomainContext().getUrl() + "/static/mcatest.html";
+	
+	private final List<RobotInfo> robotInfos = new ArrayList<RobotInfo>();
+	private final List<RobotInfo> checkedConfigs = new ArrayList<RobotInfo>();
+	
+	private AssistantConfigForm mainForm;
+
+	public AssistantConfigListForm(AssistantConfigForm mainForm) {
+		pager = ListFormCellTable.getDefaultCellTablePager();
+		initWidget(uiBinder.createAndBindUi(this));
+		pager.setDisplay(cellTable);
+		
+		this.mainForm = mainForm;
+		
+		noInstallationsLabel.setText(getMessage("NO_ENDPOINTS"));
+		createButton.setText(getMessage("CREATE_ENDPOINT"));
+		trashSelectedButton.setText(getMessage("TRASH_SELECTED"));
+		downloadButton.setText(getMessage("DOWNLOAD_ASSISTANT"));
+		
+		setupNoteAssistant.setHTML(getMessage("INSTRUCTION_NOTE_ASSISTANT"));
+		setupNoteMCA.setHTML(getMessage("INSTRUCTION_NOTE_MCA"));
+		assistantInfo1.setText(getMessage("ASSISTANT_INFO_1"));
+		assistantInfo2.setText(getMessage("ASSISTANT_INFO_2"));
+		assistantInfo3.setText(getMessage("ASSISTANT_INFO_3"));
+	}
+	
+	@UiFactory CellTable<SlingerConfigInfo> makeCellTable() {
+		return new ListFormCellTable<SlingerConfigInfo>();
+	}
+	
+	@Override
+	public void initPage() {
+		findAndDisplayRobotUsers();
+	}
+	
+	@Override
+	public HTMLPanel getContent() {
+		return installationsListPanel;
+	}
+	
+	@Override
+	public boolean shouldShowBackBtn() {
+		return false;
+	}
+	
+	@Override
+	public String getTitleText() {
+		return "";
+	}
+	
+	private void findAndDisplayRobotUsers() {
+		Services.findRobotUsers(CredentialManager.get().getPassword(), mainForm.getAccount().getId(), new SadFoxCallbackWrapper<List<RobotInfo>>() {
+
+			@Override
+			protected void wrapperSuccess(List<RobotInfo> result) {
+				robotInfos.clear();
+				for(RobotInfo robot : result) {
+					if(robot.getBackingAccount().getStatus().equals(AccountStatus.CANCELLED)){
+						continue;
+					}
+					if(robot.isClaimed()) {
+						robotInfos.add(robot);
+					}
+				}
+				
+				refreshTable();
+				mainForm.showCurrentPage();
+			}
+
+			@Override
+			protected void wrapperFailure(Throwable caught) {
+				mainForm.goToErrorPage(getMessage("FIND_ENDPOINTS_ERROR_MESSAGE"));
+			}
+		});
+	}
+	
+	private void refreshTable() {
+		cellTable.setData(robotInfos);
+		cellTable.getData().refresh();
+		if(robotInfos.size() < 1) {
+			pager.setVisible(false);
+			noInstallationsLabel.setVisible(true);
+			cellTable.setVisible(false);
+			trashSelectedButton.setEnabled(false);
+		} else {
+			pager.setVisible(true);
+			cellTable.setVisible(true);
+			noInstallationsLabel.setVisible(false);
+			trashSelectedButton.setEnabled(true);
+		}
+		refreshCellTable();
+	}
+	
+	private void refreshCellTable() {
+		cellTable.removeAllColumns();
+		
+		Column<RobotInfo, Boolean> checkColumn = ListFormCellTable.getWorkingCheckboxForCellTable(cellTable, UIObject.DEBUG_ID_PREFIX + AssistantConfigForm.BASE_DEBUG_ID);
+		
+		final FieldUpdater<RobotInfo, Boolean> configCheckUpdater = new FieldUpdater<RobotInfo, Boolean>() {
+			@Override
+			public void update(int index, RobotInfo object, Boolean value) {
+				if (value && !checkedConfigs.contains(object)) {
+					checkedConfigs.add(object);
+				} else if (!value && checkedConfigs.contains(object)) {
+					checkedConfigs.remove(object);
+				}
+				updateTrashButton();
+			}
+		};
+		
+		checkColumn.setFieldUpdater(configCheckUpdater);
+		cellTable.addColumn(checkColumn);
+		
+		Column<RobotInfo, String> nameCol = new Column<RobotInfo, String>(new ClickableTextCell()) {
+			@Override
+			public String getValue(final RobotInfo existingRule) {
+				return null; //render is overridden to entirely handle producing the proper value the cell
+			}
+			
+			@Override
+			public void render(Cell.Context context, RobotInfo object, SafeHtmlBuilder sb) {
+				//since generating html for display, escape the config name for safety
+				String safeName = new SafeHtmlBuilder().appendEscaped(object.getName() == null? getMessage("UNNAMED_ENDPOINT") : object.getName()).toSafeHtml().asString();
+
+				safeName = ExpressListing.fixAmpersand(safeName);
+
+				Label link = new Label(safeName);
+				Style linkStyle = link.getElement().getStyle();
+				linkStyle.setTextDecoration(TextDecoration.UNDERLINE);
+				linkStyle.setCursor(Cursor.POINTER);
+				link.ensureDebugId(AssistantConfigForm.BASE_DEBUG_ID + "endpointname-" + SafeHtmlUtils.htmlEscape(object.getDebugSuffix()));
+				
+				sb.appendHtmlConstant(link.toString());
+			}
+		};
+		nameCol.setFieldUpdater(new FieldUpdater<RobotInfo, String>() {
+			@Override //Update gets called for clicks when using a ClickableTextCell
+			public void update(int index, RobotInfo object, String value) {
+				((AssistantConfigEditForm)AssistantTabPage.EDIT_CONF_PAGE.getAssociatedForm()).setLastSelectedInfo(object);
+				mainForm.goToPage(AssistantTabPage.EDIT_CONF_PAGE, true);
+			}
+		});
+		
+		cellTable.addColumn(nameCol, getMessage("NAME_TITLE"));
+		
+		final Column<RobotInfo, SafeHtml> deviceCol = new Column<RobotInfo, SafeHtml>(new SafeHtmlCell()) {
+			
+			@Override
+			public SafeHtml getValue(final RobotInfo object) {
+				return new SafeHtml() {
+					private static final long serialVersionUID = 1L;
+					
+					@Override
+					public String asString() {
+						String escapedDeviceName = SafeHtmlUtils.htmlEscape(object.getDevice().getDeviceName());
+						Label deviceNameLabel = new Label();
+						deviceNameLabel.setText(escapedDeviceName);
+						deviceNameLabel.ensureDebugId(AssistantConfigForm.BASE_DEBUG_ID + "devicename-" + escapedDeviceName );
+						return deviceNameLabel.toString();
+					}
+				};
+			}
+		};
+		
+		cellTable.addColumn(deviceCol, getMessage("DEVICE_TITLE"));
+		
+		final Column<RobotInfo, SafeHtml> externalIpAddressCol = new Column<RobotInfo, SafeHtml>(new SafeHtmlCell()) {
+			
+			@Override
+			public SafeHtml getValue(final RobotInfo object) {
+				return new SafeHtml() {
+					private static final long serialVersionUID = 1L;
+					
+					@Override
+					public String asString() {
+						String ipAddress = object.getExternalIpAddress();
+						Label ipAddressLabel = new Label();
+						if(ipAddress == null) {
+							ipAddress = getMessage("INVALID_IP");
+							ipAddressLabel.addStyleName("sf-invalidData");
+						}
+						String escapedIpAddress = SafeHtmlUtils.htmlEscape(ipAddress);
+						ipAddressLabel.setText(escapedIpAddress);
+						ipAddressLabel.ensureDebugId(AssistantConfigForm.BASE_DEBUG_ID + "externipaddress-" + escapedIpAddress );
+						
+						return ipAddressLabel.toString();
+					}
+				};
+			}
+		};
+		
+		cellTable.addColumn(externalIpAddressCol, getMessage("EXTERN_IP_TITLE"));
+
+		final Column<RobotInfo, SafeHtml> internalAddressesCol = new Column<RobotInfo, SafeHtml>(new SafeHtmlCell()) {
+			
+			@Override
+			public SafeHtml getValue(final RobotInfo object) {
+				return new SafeHtml() {
+					private static final long serialVersionUID = 1L;
+					
+					@Override
+					public String asString() {
+						List<String> ipAddresses = object.getInternalIpAddresses();
+						HTML ipAddressLabel;
+						if(FoxUtil.isNullOrEmpty(ipAddresses)) {
+							ipAddressLabel = new HTML(getMessage("INVALID_IP"));
+							ipAddressLabel.addStyleName("sf-invalidData");
+						} else {
+							String ipAddrText = SafeHtmlUtils.fromTrustedString(FoxUtil.getDelimitedString(new ArrayList<String>(ipAddresses), "<br>")).asString();
+							ipAddressLabel = new HTML(ipAddrText);
+						}
+						ipAddressLabel.ensureDebugId(AssistantConfigForm.BASE_DEBUG_ID + "internipaddress-" + object.getId());
+						
+						return ipAddressLabel.toString();
+					}
+				};
+			}
+		};
+		
+		cellTable.addColumn(internalAddressesCol, getMessage("INTERN_IPS_TITLE"));
+		
+		
+		final FoxButtonCell editCell = new FoxButtonCell();
+		Column<RobotInfo, FoxButtonable> editCol = new Column<RobotInfo, FoxButtonable>(editCell) {
+			@Override
+			public FoxButtonable getValue(final RobotInfo existingRule) {
+				return new FoxButtonable() {
+					
+					@Override
+					public String getText() {
+						return getMessage("EDIT");
+					}
+					
+					@Override
+					public String getImageUrl() {
+						return "/media/icons/settings.png";
+					}
+				};
+			}
+			
+			@Override
+			public void render(Cell.Context context, RobotInfo object, SafeHtmlBuilder sb) {
+				if (!SadFoxEntryPoint.get().getContext().getDomainContext().isProduction()) {
+					editCell.ensureDebugId(AssistantConfigForm.BASE_DEBUG_ID + "endpointedit-" + SafeHtmlUtils.htmlEscape(object.getDebugSuffix()));
+				}
+				
+				super.render(context, object, sb);
+			}
+		};
+		editCol.setFieldUpdater(new FieldUpdater<RobotInfo, FoxButtonable>() {
+			@Override //Update gets called for clicks when using a ClickableTextCell
+			public void update(int index, RobotInfo object, FoxButtonable value) {
+				((AssistantConfigEditForm)AssistantTabPage.EDIT_CONF_PAGE.getAssociatedForm()).setLastSelectedInfo(object);
+				mainForm.goToPage(AssistantTabPage.EDIT_CONF_PAGE, true);
+			}
+		});
+		
+		cellTable.addColumn(editCol, "");
+	}
+	
+	private void updateTrashButton() {
+		trashSelectedButton.setEnabled(!checkedConfigs.isEmpty());
+	}
+	
+	@UiHandler("trashSelectedButton")
+	void deleteSelected(ClickEvent event) {
+		if (!ExpressListing.checkPermissions(mainForm.getAccount())) {
+			return;
+		}
+		
+		setInstallationListingFormBtnsEnabled(false);
+		
+		Services.deleteRobotUsers(checkedConfigs, new SadFoxCallbackWrapper<Void>() {
+			@Override
+			public void wrapperSuccess(Void result) {
+				setInstallationListingFormBtnsEnabled(true);
+				findAndDisplayRobotUsers();
+			}
+			
+			@Override
+			public void wrapperFailure(Throwable caught) {
+				setInstallationListingFormBtnsEnabled(true);
+				mainForm.goToErrorPage(getMessage("DELETION_ERROR_MESSAGE"));
+			}
+		});
+	}
+	
+	private void setInstallationListingFormBtnsEnabled(boolean enabled) {
+		createButton.setEnabled(enabled);
+		trashSelectedButton.setEnabled(enabled);
+	}
+	
+	@UiHandler("createButton")
+	void createNewInstallation(ClickEvent event) {
+		mainForm.goToPage(AssistantTabPage.TOKEN_PAGE);
+	}
+	
+	@UiHandler("downloadButton")
+	void downloadAssistant(ClickEvent event) {
+		// TODO: Once MIMcloud Assistant exists, we should totally download it
+		JsWindowOptions jsWindowOptions = new JsWindowOptions();
+		jsWindowOptions.height = 600;
+		jsWindowOptions.width = 1024;
+		jsWindowOptions.scrollbars = true;
+		jsWindowOptions.menubar = true;
+		jsWindowOptions.toolbar = false;
+		
+		JsWindow jsWindow = new JsWindow(mcaUrl, jsWindowOptions);
+
+		try {
+			jsWindow.openLink();
+		} catch (JsPopupsDisabledException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	static {
+		Messages.putMessage("en", AssistantConfigListForm.class, "CREATE_ENDPOINT", "Add Assistant Token");
+		Messages.putMessage("en", AssistantConfigListForm.class, "TRASH_SELECTED", "Trash Selected");
+		Messages.putMessage("en", AssistantConfigListForm.class, "NO_ENDPOINTS", "There are no installations currently set up for The Assistant or MIMcloud Assistant.");
+		Messages.putMessage("en", AssistantConfigListForm.class, "ASSISTANT_INFO_1", "Start up The Assistant.");
+		Messages.putMessage("en", AssistantConfigListForm.class, "ASSISTANT_INFO_2", "Navigate to the MIMcloud tab.");
+		Messages.putMessage("en", AssistantConfigListForm.class, "ASSISTANT_INFO_3", "Click on the \"ADD ASSISTANT TOKEN\" button below.");
+		Messages.putMessage("en", AssistantConfigListForm.class, "INSTRUCTION_NOTE_ASSISTANT", "If you are using The Assistant&trade;:");
+		Messages.putMessage("en", AssistantConfigListForm.class, "INSTRUCTION_NOTE_MCA", "If you are using the MIMcloud Assistant&trade;:\n\nPlease download and follow the setup wizard included with it.");
+		
+		Messages.putMessage("en", AssistantConfigListForm.class, "NAME_TITLE", "Installation Name");
+		Messages.putMessage("en", AssistantConfigListForm.class, "UNNAMED_ENDPOINT", "[no name entered]");
+		Messages.putMessage("en", AssistantConfigListForm.class, "INVALID_IP", "[inaccessible IP]");
+		Messages.putMessage("en", AssistantConfigListForm.class, "DEVICE_TITLE", "Device");
+		Messages.putMessage("en", AssistantConfigListForm.class, "EXTERN_IP_TITLE", "External IP");
+		Messages.putMessage("en", AssistantConfigListForm.class, "INTERN_IPS_TITLE", "Internal IPs");
+		Messages.putMessage("en", AssistantConfigListForm.class, "EDIT", "Edit");
+		
+		Messages.putMessage("en", AssistantConfigListForm.class, "DOWNLOAD_ASSISTANT", "Download MIMcloud Assistant");
+		
+		Messages.putMessage("en", AssistantConfigListForm.class, "DELETION_ERROR_MESSAGE", "An error occurred trying to delete installations. If you are unable to delete an installation or experience this issue again, please contact support@mimcloud.com.");
+		Messages.putMessage("en", AssistantConfigListForm.class, "FIND_ENDPOINTS_ERROR_MESSAGE", "An error occurred when trying to load the installations list. If this problem persists, please contact support@mimcloud.com.");
+	}
+	static String getMessage(String key) { return Messages.getString(AssistantConfigListForm.class, key); }
+}

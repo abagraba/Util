@@ -1,0 +1,21 @@
+package com.mimvista.cloud.organizer.verifier.panels;
+
+import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+
+public class VerifierFormatSelect extends JPanel{
+	
+	private ButtonGroup group = new ButtonGroup();
+	
+	private JRadioButton csv = new JRadioButton("CSV");
+	private JRadioButton json = new JRadioButton("JSON");
+	
+	public VerifierFormatSelect(){
+		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+		
+	}
+	
+
+}

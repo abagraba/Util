@@ -1,0 +1,56 @@
+package com.mimvista.cloud.organizer.verifier.panels;
+
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.WindowEvent;
+
+import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+
+import com.mimvista.cloud.organizer.verifier.proui.BoxUtil;
+import com.mimvista.swing.BoxUtils;
+
+public class VerifierFormatSelect extends JDialog{
+	
+	private JPanel content;
+	
+	private ButtonGroup group = new ButtonGroup();
+	
+	private JRadioButton csv = new JRadioButton("CSV");
+	private JRadioButton json = new JRadioButton("JSON");
+	
+	private JButton cancel = new JButton("Cancel");
+	private JButton select = new JButton("Select");
+
+	
+	private ActionListener cancelAction = new ActionListener() {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			dispatchEvent(new WindowEvent(VerifierFormatSelect.this, WindowEvent.WINDOW_CLOSING));
+		}
+	};
+	
+	public VerifierFormatSelect(){
+		group.add(csv);
+		group.add(json);
+
+		JPanel buttons = BoxUtil.horizontalBox();
+		BoxUtil.insert(cancel, buttons);
+		BoxUtil.addGlue(buttons);
+		BoxUtil.insert(select, buttons);
+		
+		
+		content = BoxUtil.verticalBox();
+		BoxUtil.insert(csv, content);
+		BoxUtil.insert(json, content);
+		BoxUtil.insert(buttons, content);
+		
+		setContentPane(content);
+	}
+	
+
+}

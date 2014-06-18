@@ -1,0 +1,158 @@
+package com.mimvista.cloud.organizer.verifier.panels;
+
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+import javax.swing.border.EmptyBorder;
+
+import com.mimvista.archive.search.SearchResultsListener;
+import com.mimvista.cloud.crypto.common.items.BasicStudyItem;
+import com.mimvista.cloud.organizer.CloudOrganizer;
+import com.mimvista.cloud.organizer.verifier.CloudSearch;
+import com.mimvista.cloud.organizer.verifier.S3Verifier;
+import com.mimvista.cloud.organizer.verifier.VerifierTask;
+import com.mimvista.cloud.organizer.verifier.proui.NavigationPanel;
+import com.mimvista.cloud.organizer.verifier.proui.SwapPanel;
+import com.mimvista.cloud.organizer.verifier.proui.BoxUtil;
+import com.mimvista.cloud.shared.common.S3SeriesURL;
+import com.mimvista.cloud.shared.common.mim.SeriesDetails;
+import com.mimvista.cloud.shared.common.mim.StudyDetails;
+import com.mimvista.cloud.shared.common.mim.StudySearchParams.BasicSearchParams;
+import com.mimvista.mimcloud.connection.CloudResponseException;
+import com.mimvista.util.progress.BasicProgressBar;
+import com.mimvista.util.progress.Progress;
+import com.mimvista.util.work.TaskManager;
+
+public class VerifierProgressPanel extends JPanel {
+
+	private static final long serialVersionUID = 1L;
+
+	private BasicProgressBar progress = new BasicProgressBar();;
+	private SwapPanel swapPanel;
+	private JButton finish = new JButton("Cancel");
+
+	private BasicSearchParams params;
+	Set<String> studyuids, seriesuids;
+	private List<BasicStudyItem> results;
+
+	private VerifierProgressPanel(SwapPanel swapPanel) {
+		this.swapPanel = swapPanel;
+		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+		setBorder(new EmptyBorder(50, 50, 50, 50));
+
+		progress.setIndeterminate(true);
+		progress.setTitle("");
+		progress.setDescription("Connecting to MIMCloud...");
+		progress.getMainComponent().setMaximumSize(new Dimension(800, 50));
+
+		JLabel title = new JLabel("Searching MIMcloud");
+		title.setFont(title.getFont().deriveFont(Font.BOLD, 24));
+
+		finish.addActionListener(cancelListener);
+
+		BoxUtil.addGlue(this);
+		BoxUtil.insert(title, this);
+		BoxUtil.addStrut(this, 25);
+		add(progress.getMainComponent());
+		BoxUtil.addStrut(this, 25);
+		BoxUtil.insert(finish, this);
+		BoxUtil.addGlue(this);
+	}
+
+	public VerifierProgressPanel(SwapPanel swapPanel, BasicSearchParams params) {
+		this(swapPanel);
+		this.params = params;
+		startVerification();
+	}
+
+	public VerifierProgressPanel(SwapPanel swapPanel, Set<String> studyuids, Set<String> seriesuids) {
+		this(swapPanel);
+		this.studyuids = studyuids;
+		this.seriesuids = seriesuids;
+		startVerification();
+	}
+
+	private void startVerification() {
+		TaskManager.background.execute(new Runnable() {
+			@Override
+			public void run() {
+				searchAndVerify();
+			}
+		});
+	}
+
+	private void searchAndVerify() {
+		progress.setDescription(VerifierTask.props.getProperty("PROGRESS_CONNECTING"));
+		// TODO temporary fix for login credentials. Should already be
+		// initialized once complete.
+		new CloudOrganizer();
+
+		progress.setStringPainted(false);
+		results = search();
+		progress.setStringPainted(true);
+		Map<Long, Map<String, S3SeriesURL>> s3urLs = S3Verifier.getS3URLs(CloudOrganizer.getCloudClient(), results, progress);
+		Map<Long, Set<String>> failed = S3Verifier.verify(s3urLs, progress);
+		if (failed.size() == 0) {
+			progress.setDescription(VerifierTask.props.getProperty("PROGRESS_VERIFIED"));
+		}
+		else {
+			for (BasicStudyItem study : results) {
+				if (failed.containsKey(study.getDetails().getDbKeyId())) {
+					Set<String> seriesUIDs = failed.get(study.getDetails().getDbKeyId());
+					
+				}
+			}
+		}
+	}
+	
+	private StudyDetails clone(StudyDetails details){
+		StudyDetails clone = new StudyDetails();
+		clone.setOwner(details.getOwner());
+		clone.setCreated(details.getCreated());
+		clone.setExpDate(details.getExpDate());
+		clone.setStudyUIDmasked(details.getStudyUIDmasked());
+		clone.setSeries(new HashSet<SeriesDetails>(details.getSeries()));
+		clone.setHiddenSeries(new HashSet<SeriesDetails>(details.getHiddenSeries()));
+		clone.setCorruptedSeries(new HashSet<SeriesDetails>(details.getCorruptedSeries()));
+		return clone;
+	}
+
+	private List<BasicStudyItem> search() {
+		try {
+			if (params != null)
+				return CloudSearch.search(CloudOrganizer.getCloudClient(), params, progress);
+			else
+				return CloudSearch.search(CloudOrganizer.getCloudClient(), studyuids, seriesuids, progress);
+		}
+		catch (CloudResponseException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	private ActionListener cancelListener = new ActionListener() {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			swapPanel.swapTo(null);
+		}
+	};
+	private ActionListener finishListener = new ActionListener() {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			VerifierResultDisplayPanel resultView = new VerifierResultDisplayPanel(swapPanel, VerifierSeriesView.getViews(results));
+			swapPanel.swapTo(new NavigationPanel(resultView, resultView));
+		}
+	};
+
+}

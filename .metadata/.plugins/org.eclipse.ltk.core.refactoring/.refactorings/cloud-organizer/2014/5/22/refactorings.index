@@ -1,0 +1,30 @@
+1401197048809	Delete element
+1401197057465	Delete element
+1401209535239	Rename method 'showLFDefaults'
+1401215647690	Move compilation unit
+1401220449118	Rename type 'SearchDisplay'
+1401223405889	Rename type 'VerifierSearchProgress'
+1401457568768	Rename type 'VerifierSearchAdditionalOptions'
+1401458807230	Move compilation unit
+1401461297719	Rename method 'prevButton'
+1401461302139	Rename method 'nextButton'
+1401463219285	Delete element
+1401463227384	Move compilation unit
+1401464016463	Delete elements
+1401464105169	Move compilation unit
+1401469946614	Rename field 'data'
+1401472953629	Delete element
+1401472961018	Delete element
+1401473302360	Rename field 'search'
+1401473305658	Rename field 'nextButton'
+1401473309363	Rename field 'prevButton'
+1401473482613	Delete element
+1401473632015	Rename type 'VerifierSearchOptions'
+1401473640324	Rename type 'VerifierOptions'
+1401473652344	Rename type 'VerifierSearchDisplay'
+1401473681934	Delete element
+1401473726333	Rename type 'VerifierPanel'
+1401473748375	Rename type 'SearchResultPrompt'
+1401474882091	Rename type 'VerifierMainPanel'
+1401474885864	Rename field 'main'
+1401474891456	Rename type 'VerifierTempRootPanel'

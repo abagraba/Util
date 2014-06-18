@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<typeInfoHistroy>
+<typeInfo handle="=cloud-common-shared/src&lt;com.mimvista.cloud.shared.common.enums{StudyEnums.java[StudyEnums[StudyStatus" modifiers="16385" timestamp="1400269260503"/>
+<typeInfo handle="=cloud-common-shared/src&lt;com.mimvista.cloud.shared.common.enums{StudyEnums.java[StudyEnums" modifiers="1" timestamp="1400269260503"/>
+<typeInfo handle="=simple-dicom/src&lt;com.mimvista.archive.search.pro{SearchSource2.java[SearchSource2[SearchParams" modifiers="9" timestamp="1400269265041"/>
+<typeInfo handle="=cloud-common-shared/src&lt;com.mimvista.cloud.shared.common.mim{StudySearchParams.java[StudySearchParams[BasicSearchParams" modifiers="9" timestamp="1402682087818"/>
+<typeInfo handle="=cloud-common-shared/src&lt;com.mimvista.cloud.shared.common.mim{StudyDetails.java[StudyDetails[DecryptedStudyDetails" modifiers="9" timestamp="1400269260509"/>
+<typeInfo handle="=simple-dicom/src&lt;com.mimvista.mimcloud.commands{CloudCommands.java[CloudCommands" modifiers="1025" timestamp="1400269265212"/>
+</typeInfoHistroy>

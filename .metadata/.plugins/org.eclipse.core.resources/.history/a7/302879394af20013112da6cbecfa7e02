@@ -1,0 +1,5 @@
+package com.mimvista.cloud.organizer.verifier.panels;
+
+public class VerifierFormatSelect {
+
+}

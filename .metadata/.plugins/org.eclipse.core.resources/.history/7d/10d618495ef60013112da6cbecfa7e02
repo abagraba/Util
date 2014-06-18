@@ -1,0 +1,409 @@
+package com.mimvista.cloud.server.mim;
+
+import java.io.IOException;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import com.google.appengine.api.taskqueue.Queue;
+import com.google.appengine.api.taskqueue.QueueFactory;
+import com.google.appengine.api.taskqueue.TaskOptions;
+import com.google.common.collect.Lists;
+import com.googlecode.objectify.Key;
+import com.mimvista.cloud.CloudUtil;
+import com.mimvista.cloud.crypto.ChainBuilder;
+import com.mimvista.cloud.crypto.ChainProcessor;
+import com.mimvista.cloud.crypto.GroupsIAdminProcessor;
+import com.mimvista.cloud.models.CloudAccount;
+import com.mimvista.cloud.models.Membership;
+import com.mimvista.cloud.server.DAO;
+import com.mimvista.cloud.server.ErrorResponses;
+import com.mimvista.cloud.server.Halper;
+import com.mimvista.cloud.server.accounts.CloudAccountHalper;
+import com.mimvista.cloud.server.accounts.GetAccountServiceImpl;
+import com.mimvista.cloud.server.accounts.testbuilders.ChangePasswordProcessor;
+import com.mimvista.cloud.server.studies.ConfirmViewProcessor;
+import com.mimvista.cloud.server.studies.GetSeriesS3HeadURLProcessor;
+import com.mimvista.cloud.server.studies.PostDownloadProcessor;
+import com.mimvista.cloud.server.studies.PreDownloadProcessor;
+import com.mimvista.cloud.server.studies.SeriesModifyProcessor;
+import com.mimvista.cloud.server.studies.SimpleStudySearch;
+import com.mimvista.cloud.server.studies.StudyActionProcessor;
+import com.mimvista.cloud.server.studies.StudyFixer;
+import com.mimvista.cloud.server.studies.StudyModifyProcessor;
+import com.mimvista.cloud.server.studies.searching.ArchivalUIDStudySearcher;
+import com.mimvista.cloud.server.studies.searching.BasicSearchParamsStudySearcher;
+import com.mimvista.cloud.server.studies.searching.ReferencedSeriesStudySearcher;
+import com.mimvista.cloud.server.studies.searching.StudyUIDStudySearcher;
+import com.mimvista.cloud.server.upload.UploadUtils;
+import com.mimvista.cloud.server.users.TermsOfServiceServiceImpl;
+import com.mimvista.cloud.server.users.UserHalper;
+import com.mimvista.cloud.shared.common.AccessChain.EncryptionLinkInfo;
+import com.mimvista.cloud.shared.common.AccountSummary;
+import com.mimvista.cloud.shared.common.FoxExceptions;
+import com.mimvista.cloud.shared.common.FoxExceptions.SessionTimeoutException;
+import com.mimvista.cloud.shared.common.FoxUtil;
+import com.mimvista.cloud.shared.common.RobotInfo;
+import com.mimvista.cloud.shared.common.SearchResults;
+import com.mimvista.cloud.shared.common.Wurly;
+import com.mimvista.cloud.shared.common.enums.AccountEnums.AccountStatus;
+import com.mimvista.cloud.shared.common.enums.AccountEnums.AccountType;
+import com.mimvista.cloud.shared.common.enums.RolePermissions.GroupPermission;
+import com.mimvista.cloud.shared.common.enums.RolePermissions.ViewingDevice;
+import com.mimvista.cloud.shared.common.mim.FixStudiesRequest;
+import com.mimvista.cloud.shared.common.mim.StudyDetails;
+import com.mimvista.cloud.shared.common.mim.StudySearchParams.BasicSearchParams;
+import com.mimvista.cloud.shared.common.mim.StudySearchParams.SearchDbIdParams;
+import com.mimvista.cloud.shared.common.mim.StudySearchParams.SearchMaskedUIDsParams;
+
+public class RequiresLoginProcessor extends MIMProcessor {
+	public RequiresLoginProcessor(HttpServletRequest req, HttpServletResponse rsp) throws SessionTimeoutException {
+		super(req, rsp);
+		if (getSadfoxContext().getActor() == null) {
+			throw new SessionTimeoutException(req.getRequestURI(), "Session Timeout");
+		}
+		currentActor = new CloudAccountHalper(getSadfoxContext().getActor());
+	}
+	
+	@Override
+	public boolean parse() throws IOException {
+		String reqUrl = req.getRequestURI();
+		
+		if (Wurly.MIM_GET_AUTH_TOKEN.getSvcLoc().equals(reqUrl)) {
+			doGetAuthToken(req, rsp);
+			return true;
+		} else if (Wurly.MIM_STUDY_ACTIONS.getSvcLoc().equals(reqUrl)) {
+			doStudyActions(req, rsp);
+			return true;
+		} else if (Wurly.MIM_STUDY_MODIFIES.getSvcLoc().equals(reqUrl)) {
+			doStudyModifies(req, rsp);
+			return true;
+		} else if (Wurly.MIM_SERIES_MODIFIES.getSvcLoc().equals(reqUrl)) {
+			doSeriesModifies(req, rsp);
+			return true;
+		} else if(Wurly.CHANGE_PASSWORD.getSvcLoc().equals(reqUrl)) {
+			doChangeManagedUserPassword(req, rsp);
+			return true;
+		} else if(Wurly.CLAIM_ROBOT_USER.getSvcLoc().equals(reqUrl)) {
+			doClaimRobotUser(req, rsp);
+			return true;
+		} else if (Wurly.MIM_GET_ACCOUNT_SUMMARY.getSvcLoc().equals(reqUrl)) {
+			doGetAccountSummary(req, rsp);
+			return true;
+		} else if (Wurly.MIM_GET_ACCOUNT_SUMMARIES.getSvcLoc().equals(reqUrl)) {
+			doGetAccountSummaries(req, rsp);
+			return true;
+		} else if (Wurly.MIM_GET_STUDY_DBKEYID.getSvcLoc().equals(reqUrl)) {
+			doGetStudyByDbKeyId(req, rsp);
+			return true;
+		} else if (Wurly.MIM_SEARCH_STUDIES.getSvcLoc().equals(reqUrl)) {
+			doSearch(req, rsp);
+			return true;
+		} else if (Wurly.MIM_SEARCH_GET_LEFTOVERS.getSvcLoc().equals(reqUrl)) {
+			doGetSearchLeftovers(req, rsp);
+			return true;
+		} else if (Wurly.MIM_GET_REF_SERIES.getSvcLoc().equals(reqUrl)) {
+			doSearchReferencingStudies(req, rsp);
+			return true;
+		} else if (Wurly.MIM_SEARCH_STUDIES_MASKUID.getSvcLoc().equals(reqUrl)) {
+			doSearchStudiesByMaskedUID(req, rsp);
+			return true;
+		} else if (Wurly.MIM_SEARCH_STUDIES_MASKUID_SERIES.getSvcLoc().equals(reqUrl)) {
+			doSearchStudiesByMaskedArchivalUID(req, rsp);
+			return true;
+		} else if (Wurly.MIM_FIX_STUDIES.getSvcLoc().equals(reqUrl)) {
+			doFixStudies(req, rsp);
+			return true;
+		} else if (Wurly.MIM_CONFIRM_VIEW.getSvcLoc().equals(reqUrl)) {
+			doConfirmView(req, rsp);
+			return true;
+		} else if (Wurly.MIM_GET_CHAIN.getSvcLoc().equals(reqUrl)) {
+			doGetChain(req, rsp);
+			return true;
+		} else if (Wurly.MIM_GET_FILE.getSvcLoc().equals(reqUrl)) {
+			doGetFile(req, rsp);
+			return true;
+		} else if (Wurly.MIM_GET_KEYPAIR.getSvcLoc().equals(reqUrl)) {
+			doGetKeypair(req, rsp);
+			return true;
+		} else if (Wurly.MIM_PRE_DOWNLOAD.getSvcLoc().equals(reqUrl)) {
+			doPreDownload(req, rsp);
+			return true;
+		} else if (Wurly.MIM_POST_DOWNLOAD.getSvcLoc().equals(reqUrl)) {
+			doPostDownload(req, rsp);
+			return true;
+		} else if (Wurly.MIM_STORE_FILE.getSvcLoc().equals(reqUrl)) {
+			doStoreFile(req, rsp);
+			return true;
+		} else if (Wurly.MIM_ACCEPT_TOS.getSvcLoc().equals(reqUrl)) {
+			doAcceptTOS(req, rsp);
+			return true;
+		} else if(Wurly.GET_GROUP_HIERARCHY.getSvcLoc().equals(reqUrl)){
+			doGetGroupHierarchy(req,rsp);
+			return true;
+		} else if (Wurly.MIM_GET_GROUPS_I_ADMIN.getSvcLoc().equals(reqUrl)) {
+			doGetAdminGroups(req, rsp);
+			return true;
+		} else if (Wurly.GET_ROBOT_FIELDS.getSvcLoc().equals(reqUrl)) {
+			doGetRobotFields(req, rsp);
+			return true;
+		} else if (Wurly.DELETE_ROBOT_USER.getSvcLoc().equals(reqUrl)) {
+			doDeleteRobotUser(req, rsp);
+			return true;
+		} else if (Wurly.CREATE_ROBOT_USER.getSvcLoc().equals(reqUrl)) {
+			doCreateRobotUser(req, rsp);
+			return true;
+		} else if (Wurly.MIM_ADD_CONTACT.getSvcLoc().equals(reqUrl)) {
+			doAddContact(req, rsp);
+			return true;
+		} else if (Wurly.MIM_ADD_ROBOT_MEMBERSHIP.getSvcLoc().equals(reqUrl)) {
+			doAddRobotMembership(req, rsp);
+			return true;
+		} else if (Wurly.MIM_REMOVE_CONTACT.getSvcLoc().equals(reqUrl)) {
+			doRemoveContact(req, rsp);
+			return true;
+		} else if (Wurly.MIM_REMOVE_MEMBERSHIP.getSvcLoc().equals(reqUrl)) {
+			doRemoveMembership(req, rsp);
+			return true;
+		} else if (Wurly.MIM_GET_S3_SERIES_HEAD_URL.getSvcLoc().equals(reqUrl)) {
+			doGetS3SeriesHeadURL(req, rsp);
+			return true;
+		}
+		
+		
+		return false;
+	}
+
+	private void doAcceptTOS(HttpServletRequest req, HttpServletResponse rsp) throws IOException {
+		byte[] versionAccepted = gson().fromJson(req.getReader(), byte[].class);
+		try {
+			new TermsOfServiceServiceImpl(req, rsp).acceptTermsOfService(versionAccepted);
+		} catch (SessionTimeoutException e) {
+			ErrorResponses.errNeedsLogin(rsp);
+		}
+	}
+	
+	private void doPreDownload(HttpServletRequest req, HttpServletResponse rsp) throws IOException {
+		new PreDownloadProcessor(req, rsp, this).process();
+	}
+
+	private void doPostDownload(HttpServletRequest req, HttpServletResponse rsp) throws IOException {
+		new PostDownloadProcessor(req, rsp).run();
+	}
+
+	private void doConfirmView(HttpServletRequest req, HttpServletResponse rsp) throws IOException {
+		new ConfirmViewProcessor(req, rsp).process();
+	}
+	
+	private void doChangeManagedUserPassword(HttpServletRequest req, HttpServletResponse rsp) throws IOException {
+		new ChangePasswordProcessor(req, rsp).run();
+	}
+	
+	private void doClaimRobotUser(HttpServletRequest req, HttpServletResponse rsp) throws IOException {
+		new ClaimRobotUserProcessor(req, rsp).run();
+	}
+	
+	private void doCreateRobotUser(HttpServletRequest req, HttpServletResponse rsp) throws IOException {
+		try{
+			new CreateRobotUserProcessor(req, rsp).process();
+		} catch(SessionTimeoutException e) {
+			ErrorResponses.errBadCredentials(rsp);
+		}
+	}
+	
+	private void doAddContact(HttpServletRequest req, HttpServletResponse rsp) throws IOException {
+		new AddContactProcessor(req, rsp).run();
+	}
+	
+	private void doAddRobotMembership(HttpServletRequest req, HttpServletResponse rsp) throws IOException {
+		new AddRobotMembershipProcessor(req, rsp).run();
+	}
+	
+	private void doRemoveContact(HttpServletRequest req, HttpServletResponse rsp) throws IOException {
+		new RemoveContactProcessor(req, rsp).run();
+	}
+	
+	private void doRemoveMembership(HttpServletRequest req, HttpServletResponse rsp) throws IOException {
+		new RemoveMembershipProcessor(req, rsp).run();
+	}
+	 
+
+	private void doGetGroupHierarchy(HttpServletRequest req, HttpServletResponse rsp) throws IOException{
+		try {
+			new GetGroupHierarchyProcessor(req, rsp).perform();
+		} catch (SessionTimeoutException e) {
+			ErrorResponses.errBadCredentials(rsp);
+		}
+	}
+	
+	private void doGetAccountSummary(HttpServletRequest req, HttpServletResponse rsp) throws IOException {
+		Long accountId = null;
+		CloudAccountHalper cah = currentActor;
+		try {
+			accountId = gson().fromJson(req.getReader(), Long.class);
+			if (accountId != null) {
+				cah = new CloudAccountHalper(Halper.getById(CloudAccount.class, accountId));
+			}
+		} catch (Exception xcp) {
+			ErrorResponses.errBadRequest(rsp);
+		}
+		
+		if (currentActor.canSee(cah)) {
+			gson().toJson(cah.getAccountSummary(currentActor.getEntity()), rsp.getWriter());
+			return;
+		}
+
+		gson().toJson(cah.getLimitedAccountSummary(), rsp.getWriter());
+	}
+	
+	private void doGetAccountSummaries(HttpServletRequest req, HttpServletResponse rsp) throws IOException {
+		Long[] accountIds = gson().fromJson(req.getParameter("idList"), Long[].class);
+		try {
+			Map<Long, AccountSummary> accountMap = GetAccountServiceImpl.getSummaries(Lists.newArrayList(accountIds), new UserHalper(currentActor.getEntity()));
+			AccountSummary[] summaries = accountMap.values().toArray(new AccountSummary[accountMap.size()]);
+			gson().toJson(summaries, rsp.getWriter());
+		} catch (FoxExceptions e) {
+			e.printStackTrace();
+		}
+	}
+	
+	private void doGetFile(HttpServletRequest req, HttpServletResponse rsp) throws IOException {
+
+	}
+
+	private void doGetKeypair(HttpServletRequest req, HttpServletResponse rsp) throws IOException {
+		EncryptionLinkInfo linkInfo = ChainBuilder.makeEncryptionLinkInfo(currentActor.getEntity());
+		gson().toJson(linkInfo, rsp.getWriter());
+	}
+
+	private void doGetStudyByDbKeyId(HttpServletRequest req, HttpServletResponse rsp) throws IOException {
+		SearchDbIdParams params = gson().fromJson(req.getReader(), SearchDbIdParams.class);
+		StudyDetails details = SimpleStudySearch.getStudyDetailsByDbKeyId(currentActor, params);
+		gson().toJson(details, rsp.getWriter());
+	}
+
+	private void doSearch(HttpServletRequest req, HttpServletResponse rsp) throws IOException {
+		BasicSearchParams params = gson().fromJson(req.getReader(), BasicSearchParams.class);
+		SearchResults results = new BasicSearchParamsStudySearcher(currentActor, params).performSearch().asSearchResults();
+		sendSearchResults(rsp, results, params);
+	}
+	
+	private void doGetSearchLeftovers(HttpServletRequest req, HttpServletResponse rsp) throws IOException {
+		BasicSearchParams params = gson().fromJson(req.getReader(), BasicSearchParams.class);
+		SearchResults results = SimpleStudySearch.getLeftoverStudies(currentActor, params);
+		sendSearchResults(rsp, results, params);
+	}
+
+	private void doSearchStudiesByMaskedUID(HttpServletRequest req, HttpServletResponse rsp) throws IOException {
+		SearchMaskedUIDsParams params = gson().fromJson(req.getReader(), SearchMaskedUIDsParams.class);
+		SearchResults results = new StudyUIDStudySearcher(currentActor, params).performSearch().asSearchResults();
+		sendSearchResults(rsp, results, params);
+	}
+
+	private void doSearchStudiesByMaskedArchivalUID(HttpServletRequest req, HttpServletResponse rsp) throws IOException {
+		SearchMaskedUIDsParams params = gson().fromJson(req.getReader(), SearchMaskedUIDsParams.class);
+		SearchResults results = new ArchivalUIDStudySearcher(currentActor, params).performSearch().asSearchResults();
+		sendSearchResults(rsp, results, params);
+	}
+	
+	private void doSearchReferencingStudies(HttpServletRequest req, HttpServletResponse rsp) throws IOException {
+		SearchMaskedUIDsParams params = gson().fromJson(req.getReader(), SearchMaskedUIDsParams.class);
+		SearchResults results = new ReferencedSeriesStudySearcher(currentActor, params).performSearch().asSearchResults();
+		sendSearchResults(rsp, results, params);
+	}
+	
+	private void doStoreFile(HttpServletRequest req, HttpServletResponse rsp) throws IOException {
+
+	}
+
+	private void doStudyActions(HttpServletRequest req, HttpServletResponse rsp) throws IOException {
+		new StudyActionProcessor(req, rsp).run();
+	}
+	
+	private void doStudyModifies(HttpServletRequest req, HttpServletResponse rsp) throws IOException {
+		new StudyModifyProcessor(req, rsp).run();
+	}
+	
+	private void doSeriesModifies(HttpServletRequest req, HttpServletResponse rsp) throws IOException {
+		new SeriesModifyProcessor(req, rsp).run();
+	}
+	
+	private void doGetChain(HttpServletRequest req, HttpServletResponse rsp) throws IOException {
+		new ChainProcessor(req, rsp).process();
+	}
+	
+	private void doFixStudies(HttpServletRequest req, HttpServletResponse rsp) throws IOException {
+		FixStudiesRequest request = gson().fromJson(req.getReader(), FixStudiesRequest.class);
+		SearchResults results = new StudyFixer(currentActor.getEntity(), request).tryFix();
+		CloudUtil.writeSearchResults(results, rsp.getWriter(), gson());
+	}
+	
+	private void doGetAdminGroups(HttpServletRequest req, HttpServletResponse rsp) throws IOException {
+		new GroupsIAdminProcessor(req, rsp).process();
+	}
+	
+	private void doGetAuthToken(HttpServletRequest req, HttpServletResponse rsp) throws IOException {
+		ViewingDevice device;
+		try {
+			device = ViewingDevice.valueOf(req.getParameter("device"));
+		} catch (Exception xcp) {
+			ErrorResponses.errBadRequest(rsp, "Invalid Device");
+			return;
+		}
+
+		CloudAccount account = currentActor.getEntity();
+		String acctKeyStr = req.getParameter("acctKeyStr");
+		if (!FoxUtil.isNullOrEmpty(acctKeyStr)) {
+			Key<CloudAccount> accountKey = DAO.stringToKey(acctKeyStr);
+			if (!accountKey.equals(currentActor.getKey())) {
+				account = new DAO().ofy().get(accountKey);
+				if (account == null) {
+					ErrorResponses.errInsufficientAccess(rsp);
+					return;
+				}
+
+				Membership membership = currentActor.getEntity().getMembershipFor(account.getKey());
+				if (membership == null || !membership.getEncLnkRole().hasAllPermissions(GroupPermission.SLINGER)) {
+					ErrorResponses.errInsufficientAccess(rsp);
+					return;
+				}
+			}
+		}
+		
+		gson().toJson(UploadUtils.getUploadTokenForAccount(account, device), rsp.getWriter());
+	}
+	
+	private void doGetRobotFields(HttpServletRequest req, HttpServletResponse rsp) throws IOException {
+		RobotInfo robotFields = new RobotFieldsProcessor(req, rsp).getRobotFieldsForCurrentUser();
+		if (robotFields == null) {
+			ErrorResponses.errBadRequest(rsp, "This method must be called as the Robot user!");
+			return;
+		}
+		gson().toJson(robotFields, rsp.getWriter());
+	}
+	
+	
+	private void doDeleteRobotUser(HttpServletRequest req, HttpServletResponse rsp) throws IOException {
+		if (currentActor == null || currentActor.getAccountInfo().getAccountType() != AccountType.ROBOT_USER) {
+			ErrorResponses.errBadRequest(rsp, "This method must be called as the Robot user!");
+			return;
+		}
+		
+		System.out.println("Cancelling robot account: " + currentActor.getAccountInfo().getName() + " with key: " + DAO.keyToString(currentActor.getKey()));
+		
+		currentActor.getEntity().setStatus(AccountStatus.CANCELLED);
+		dao.ofy().put(currentActor.getEntity());
+		
+		Queue queue = QueueFactory.getQueue("accountCancellationQueue");
+		TaskOptions task = TaskOptions.Builder.withCountdownMillis(24 * 60 * 60 * 1000) // 24 Hours
+				.url(Wurly.ACCOUNT_DELETION.getLocation())
+				.param(Wurly.ACCOUNT_DELETION_KEY_PARAM, Long.toString(currentActor.getEntity().getId()));
+		queue.add(task);
+	}
+
+	private void doGetS3SeriesHeadURL(HttpServletRequest req, HttpServletResponse rsp) throws IOException {
+		new GetSeriesS3HeadURLProcessor(req, rsp).process();
+	}
+
+}

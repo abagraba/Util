@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?><commitmessages>
+<commitmessage>ECO-46096 implmenting verification&#13;
+</commitmessage>
+<commitmessage>ECO-46096 Added S3 Commands for Verification</commitmessage>
+<commitmessage>ECO-46096 Implemented the ability to get URLs for Verification</commitmessage>
+<commitmessage>Task-46094&#13;
+	 Added finctionality to open CSV/JSON files</commitmessage>
+<commitmessage>Task-46094 Missed these files&#13;
+	</commitmessage>
+<commitmessage>Task-46094 Implemented saving to JSON and CSV</commitmessage>
+<commitmessage>Task-46092 Added method to disable percent display.</commitmessage>
+<commitmessage>ECO-46093 Refactored Searching</commitmessage>
+<commitmessage>Task-46092 Cleaning up verifier UI code and modularized Cloud organizer.</commitmessage>
+<commitmessage>ECO-46093 Implemented searching funtionality and UI</commitmessage>
+</commitmessages>

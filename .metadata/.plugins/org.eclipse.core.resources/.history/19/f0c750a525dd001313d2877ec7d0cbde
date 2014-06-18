@@ -1,0 +1,20 @@
+package Organizer.UI;
+
+import java.awt.Dimension;
+
+import javax.swing.JComponent;
+
+public class LoadingBar extends JComponent{
+	
+	public LoadingBar(int minWidth, int minHeight){
+		Dimension dim = new Dimension(minWidth, minHeight);
+		setMinimumSize(dim);
+		setPreferredSize(dim);
+		setOpaque(false);
+	}
+	
+	public void paintComponent(Graphics g){
+		
+	}
+	
+}

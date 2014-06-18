@@ -1,0 +1,27 @@
+package com.mimvista.cloud.server.studies;
+
+import java.io.IOException;
+import java.util.Arrays;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import com.mimvista.cloud.models.Study;
+import com.mimvista.cloud.server.DAO;
+import com.mimvista.cloud.server.SadfoxProcessor;
+import com.mimvista.cloud.shared.common.mim.StudySearchParams.SearchDbIdParams;
+
+public class ConfirmViewProcessor extends SadfoxProcessor {
+	private SearchDbIdParams params;
+	private StudyHalper shalp;
+	private long[] ids;
+
+	public ConfirmViewProcessor(HttpServletRequest req, HttpServletResponse rsp) throws IOException {
+		super(req, rsp);
+		params = gson().fromJson(req.getReader(), SearchDbIdParams.class);
+	}
+
+	public void process() throws IOException {
+		DAO.idsToKeys(Study.class, Arrays.asList(ids));
+	}
+}

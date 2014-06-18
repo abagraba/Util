@@ -1,0 +1,17 @@
+package com.mimvista.cloud.organizer.verifier;
+
+
+import com.mimvista.cloud.organizer.verifier.proui.SwapPanel;
+
+public class VerifierPanel extends SwapPanel {
+
+	private static final long serialVersionUID = 1L;
+	
+	private VerifierHomePanel home = new VerifierHomePanel(this);
+
+	
+	public VerifierPanel() {
+		setDefault(home);
+	}
+	
+}

@@ -1,0 +1,12 @@
+import java.io.FileInputStream;
+
+
+public class PNGReader {
+
+	public void readPNG(File f){
+		InputStream is = new FileInputStream(f);
+		
+	}
+	
+	
+}

@@ -1,0 +1,5 @@
+package PNGDecoder;
+
+public class ChunkPLTE extends Chunk {
+
+}

@@ -1,0 +1,11 @@
+package util.ui.swing;
+
+import java.awt.Rectangle;
+
+public abstract class View {
+
+	public Rectangle getViewBounds(){
+		
+	}
+	
+}

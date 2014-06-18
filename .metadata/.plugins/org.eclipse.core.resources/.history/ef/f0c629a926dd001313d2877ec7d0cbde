@@ -1,0 +1,26 @@
+package Organizer.UI;
+
+import java.awt.Dimension;
+import java.awt.Graphics;
+
+import javax.swing.JComponent;
+
+public class LoadingBar extends JComponent {
+
+	private float progress = 0;
+	
+	public LoadingBar(int minWidth, int minHeight) {
+		Dimension dim = new Dimension(minWidth, minHeight);
+		setMinimumSize(dim);
+		setPreferredSize(dim);
+		setOpaque(false);
+	}
+
+	public void paintComponent(Graphics g) {
+		g.setColor(ColorTheme.borderColor);
+		g.drawRect(0, 0, getWidth() - 1, getHeight() - 1);
+		g.setClip(0, 0, (int)(getWidth()*progress), getHeight());
+		g.setColor(ColorTheme.loadingColor);
+	}
+
+}

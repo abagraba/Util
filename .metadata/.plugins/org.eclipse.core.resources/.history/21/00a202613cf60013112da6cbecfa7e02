@@ -1,0 +1,286 @@
+package com.mimvista.mimcloud.commands;
+
+import java.io.FilterInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+
+import org.apache.commons.httpclient.Header;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpMethod;
+import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.commons.httpclient.methods.HeadMethod;
+import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.commons.httpclient.methods.multipart.FilePart;
+import org.apache.commons.httpclient.methods.multipart.MultipartRequestEntity;
+import org.apache.commons.httpclient.methods.multipart.Part;
+import org.apache.commons.httpclient.methods.multipart.PartSource;
+import org.apache.commons.httpclient.methods.multipart.StringPart;
+import org.apache.commons.httpclient.params.HttpMethodParams;
+
+import com.mimvista.cloud.shared.common.S3SeriesURL;
+import com.mimvista.cloud.shared.common.mim.PreUploadParams.PreUploadResponse.S3Policy;
+import com.mimvista.cloud.shared.common.mim.SeriesDetails;
+import com.mimvista.mimcloud.commands.CloudCommands.BlankCommand;
+import com.mimvista.mimcloud.connection.CloudClient;
+import com.mimvista.mimcloud.connection.CloudConfigs;
+import com.mimvista.mimcloud.connection.CloudManager;
+import com.mimvista.mimcloud.connection.CloudResponseException.UnrecognizedResponseException;
+import com.mimvista.mimcloud.downloader.Downloader;
+import com.mimvista.mimcloud.metadata.ProgressInputStream;
+import com.mimvista.mimcloud.metadata.ProgressInputStream.ProgressChurner;
+import com.mimvista.mimcloud.metadata.S3Uploadable;
+import com.mimvista.mimcloud.metadata.ThrottledInputStream;
+import com.mimvista.properties.MIMPrefs;
+import com.mimvista.util.MIMLog;
+import com.mimvista.util.Pair;
+
+public abstract class S3Commands<ReturnType> extends BlankCommand<ReturnType> {
+	protected HttpMethod method;
+	protected ProgressInputStream stream = null;
+	protected CloudClient client;
+	protected boolean cancelled = false;
+	
+	public S3Commands(CloudClient client) {
+		this.client = client;
+	}
+	
+	protected abstract HttpMethod request();
+	protected abstract ReturnType process(HttpMethod method) throws UnrecognizedResponseException, IOException;
+	
+	public void cancel() {
+		cancelled = true;
+		if (stream != null) {
+			stream.cancel();
+		}
+	}
+	
+	@Override
+	public ReturnType execute() throws UnrecognizedResponseException, IOException {
+		HttpClient httpClient = CloudManager.getCloudFilter().filterS3HttpClient(new HttpClient());
+		client.applyProxy(httpClient);
+		
+		method = CloudManager.getCloudFilter().filterS3Method(request());
+		httpClient.executeMethod(method);
+		return process(method);
+	}
+	
+	public static class UploadSeriesCommand extends S3Commands<Boolean> {
+		private static final String awsAccessKey = "AKIAJEUU7IYAM7JCI7JQ";
+		private final S3Uploadable uploadable;
+		private final S3Policy policy;
+		private final ProgressChurner churner;
+		private final PartSource partSource;
+		
+		public UploadSeriesCommand(CloudClient client, S3Uploadable uploadable, S3Policy policy, ProgressChurner churner) {
+			super(client);
+			this.uploadable = uploadable;
+			this.policy = policy;
+			this.churner = churner;
+			this.partSource = makePartSource();
+		}
+		
+		@Override
+		public Boolean execute() throws UnrecognizedResponseException, IOException {
+			try {
+				return super.execute();
+			} finally {
+				if (method != null) {
+					method.releaseConnection();
+				}
+			}
+		}
+		
+		protected PostMethod request() {
+			PostMethod method = new PostMethod("http://" + policy.getBucket() + ".s3.amazonaws.com/");
+			Part[] parts = new Part[] {
+				new StringPart("key", policy.getUserPrefix() + uploadable.getS3Key()),
+				new StringPart("AWSAccessKeyId", awsAccessKey),
+				new StringPart("acl", "private"),
+				new StringPart("policy", policy.getDocument()),
+				new StringPart("signature", policy.getSignature()),
+				new StringPart("success_action_redirect", "http://localhost/"),
+				new StringPart("Content-Type", uploadable.getContentType()),
+				new FilePart("file", partSource)
+			};
+			
+			method.setRequestEntity(new MultipartRequestEntity(parts, method.getParams()));
+			return method;
+		}
+		
+		@Override
+		protected Boolean process(HttpMethod method) throws UnrecognizedResponseException {
+			int returnCode = method.getStatusCode();
+			if (returnCode != 303) {
+				throw new UnrecognizedResponseException(method);
+			}
+			
+			Header responseHeader = method.getResponseHeader("Location");
+			if (!responseHeader.getValue().startsWith("http://localhost/")) {
+				MIMLog.error("Location tells us to go " + responseHeader.getValue(), this);
+				return false;
+			}
+			
+			return true;
+		}
+		
+		private PartSource makePartSource() {
+			return new PartSource() {
+				@Override
+				public long getLength() {
+					return uploadable.getLength();
+				}
+				
+				@Override
+				public String getFileName() {
+					return uploadable.getFileName();
+				}
+				
+				@Override
+				public InputStream createInputStream() throws IOException {
+					stream = new ProgressInputStream(new ThrottledInputStream(uploadable.createInputStream()), churner);
+					if (cancelled) {
+						stream.cancel();
+					}
+					return stream;
+				}
+			};
+		}
+	}
+	
+	public static class DownloadSeriesCommand extends S3Commands<ProgressInputStream> {
+		private final SeriesDetails seriesDetails;
+		private final Pair<Integer, Integer> downloadRange;
+		private final ProgressChurner churner;
+		
+		public DownloadSeriesCommand(CloudClient client, SeriesDetails seriesDetails, Pair<Integer, Integer> downloadRange, ProgressChurner churner) {
+			super(client);
+			this.seriesDetails = seriesDetails;
+			this.downloadRange = downloadRange;
+			this.churner = churner;
+			if (downloadRange != null) {
+				if (!Downloader.canUseRangeHeader()) {
+					throw new IllegalStateException("We already know that ranges don't work, don't ask for one again.");
+				}
+			}
+		}
+		
+		protected GetMethod request() {
+			String url = seriesDetails.getUrl();
+			if (MIMPrefs.getPrefs(CloudConfigs.prefsFile).getBooleanConfig(CloudConfigs.cfgUseHttpsForS3Download, false)) {
+				if (url.startsWith("http://")) {
+					url = "https://" + url.substring(7);
+				}
+			}
+			GetMethod method = new GetMethod(url);
+			HttpMethodParams params = method.getParams();
+			params.setSoTimeout(15000);
+			method.setParams(params);
+			if (downloadRange != null) {
+				if (!Downloader.canUseRangeHeader()) {
+					throw new IllegalStateException("We already know that ranges don't work, don't ask for one again.");
+				}
+				// horrible hack to simulate proxies that don't support the range header 
+				if (!MIMPrefs.getPrefs("debug.txt", false).getBooleanConfig("DISABLE RANGE HEADER", false)) {
+					method.addRequestHeader("Range", "bytes=" + downloadRange.x + "-" + downloadRange.y);
+				}
+			}
+			return method;
+		}
+		
+		@Override
+		protected ProgressInputStream process(final HttpMethod method) throws UnrecognizedResponseException, IOException {
+			if (method.getStatusCode() != 206 && method.getStatusCode() != 200) {
+				MIMLog.error("Got response code " + method.getStatusCode() + " instead of 200/206.", this);
+				throw new UnrecognizedResponseException(method);
+			}
+			
+			if (downloadRange != null && method.getResponseHeader("Content-Range") == null) {
+				Downloader.setCanUseRangeHeader(false);
+			}
+			
+			InputStream methodCloser = new FilterInputStream(new ThrottledInputStream(method.getResponseBodyAsStream())) {
+				@Override
+				public void close() throws IOException {
+					super.close();
+					method.releaseConnection();
+				}
+				
+				@Override
+				protected void finalize() throws Throwable {
+					close();
+					super.finalize();
+				}
+			};
+			
+			stream = new ProgressInputStream(methodCloser, churner);
+			if (cancelled) {
+				stream.cancel();
+			}
+			return stream;
+		}
+	}
+	
+	
+	public static class VerifyCommand extends S3Commands<ProgressInputStream> {
+		private final S3SeriesURL seriesDetails;
+		
+		public VerifyCommand(CloudClient client, S3SeriesURL urls) {
+			super(client);
+		}
+		
+		protected HeadMethod request() {
+			String url = seriesDetails.getUrl();
+			if (MIMPrefs.getPrefs(CloudConfigs.prefsFile).getBooleanConfig(CloudConfigs.cfgUseHttpsForS3Download, false)) {
+				if (url.startsWith("http://")) {
+					url = "https://" + url.substring(7);
+				}
+			}
+			GetMethod method = new GetMethod(url);
+			HttpMethodParams params = method.getParams();
+			params.setSoTimeout(15000);
+			method.setParams(params);
+			if (downloadRange != null) {
+				if (!Downloader.canUseRangeHeader()) {
+					throw new IllegalStateException("We already know that ranges don't work, don't ask for one again.");
+				}
+				// horrible hack to simulate proxies that don't support the range header 
+				if (!MIMPrefs.getPrefs("debug.txt", false).getBooleanConfig("DISABLE RANGE HEADER", false)) {
+					method.addRequestHeader("Range", "bytes=" + downloadRange.x + "-" + downloadRange.y);
+				}
+			}
+			return method;
+		}
+		
+		@Override
+		protected ProgressInputStream process(final HttpMethod method) throws UnrecognizedResponseException, IOException {
+			if (method.getStatusCode() != 206 && method.getStatusCode() != 200) {
+				MIMLog.error("Got response code " + method.getStatusCode() + " instead of 200/206.", this);
+				throw new UnrecognizedResponseException(method);
+			}
+			
+			if (downloadRange != null && method.getResponseHeader("Content-Range") == null) {
+				Downloader.setCanUseRangeHeader(false);
+			}
+			
+			InputStream methodCloser = new FilterInputStream(new ThrottledInputStream(method.getResponseBodyAsStream())) {
+				@Override
+				public void close() throws IOException {
+					super.close();
+					method.releaseConnection();
+				}
+				
+				@Override
+				protected void finalize() throws Throwable {
+					close();
+					super.finalize();
+				}
+			};
+			
+			stream = new ProgressInputStream(methodCloser, churner);
+			if (cancelled) {
+				stream.cancel();
+			}
+			return stream;
+		}
+	}
+}

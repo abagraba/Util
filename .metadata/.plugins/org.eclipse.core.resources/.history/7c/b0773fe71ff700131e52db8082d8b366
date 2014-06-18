@@ -1,0 +1,8 @@
+package util.ui.swing;
+
+public class ImageDisplay {
+
+	public static final int FIXED_SIZE = 0;
+	public static final int SCALE_WITH_IMAGE = 1;
+	
+}

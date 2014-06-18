@@ -1,0 +1,55 @@
+package com.mimvista.cloud.organizer.verifier;
+
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+
+import javax.swing.JFrame;
+
+import net.tomahawk.XFileDialog;
+
+import com.mimvista.cloud.organizer.CloudOrganizer;
+import com.mimvista.mimcloud.connection.CloudResponseException;
+import com.mimvista.numerics.JNIUtils;
+import com.mimvista.preferencesNew.MIMCloudOrganizerPrefs;
+import com.mimvista.proui.MIMLookAndFeel;
+
+public class TestFrame extends JFrame {
+
+	private static final long serialVersionUID = 1L;
+
+	public static TestFrame instance;
+	
+	public TestFrame() {
+		super();
+		
+		
+//		SwingUtilities.updateComponentTreeUI(this);
+		Dimension dim = new Dimension(800, 600);
+		setMinimumSize(dim);
+		setSize(dim);
+		
+		getContentPane().setLayout(new BorderLayout());
+		getContentPane().add(new VerifierPanel(), BorderLayout.CENTER);
+
+		pack();
+		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		setVisible(true);
+		instance = this;
+	}
+
+	public static void main(String[] args) {
+		JNIUtils.setJavaLibPath();
+		MIMLookAndFeel.setActive();
+		try {
+			CloudOrganizer.connect("jweber+studies@mim.com", "passworld".getBytes());
+		}
+		catch (CloudResponseException e) {
+			e.printStackTrace();
+		};
+
+//		MIMCloudOrganizerPrefs.resultDisplayColumns.getValue();
+		
+		XFileDialog.initClass();
+		new TestFrame();
+	}
+}

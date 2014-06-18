@@ -1,0 +1,29 @@
+package com.mimvista.cloud.organizer.ui;
+
+import java.awt.Component;
+
+import javax.swing.BoxLayout;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+
+public class VerifierUtil {
+
+	public static JPanel horizontalBox(){
+		JPanel panel = new JPanel();
+		panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
+		return panel;
+	}
+
+	public static JPanel verticalBox(){
+		JPanel panel = new JPanel();
+		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+		return panel;
+	}
+
+	public static void insert(JComponent component, JPanel container){
+		container.add(component);
+		component.setAlignmentX(Component.CENTER_ALIGNMENT);
+		component.setAlignmentY(Component.CENTER_ALIGNMENT);
+	}
+
+}

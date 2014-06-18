@@ -1,0 +1,16 @@
+package com.mimvista.cloud.organizer.ui;
+
+import java.awt.Component;
+import java.awt.Container;
+
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+
+public class VerifierUtil {
+
+	public static void insert(JPanel container, JComponent component){
+		container.add(component);
+		component.setAlignmentX(Component.CENTER_ALIGNMENT);
+	}
+	
+}

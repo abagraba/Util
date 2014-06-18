@@ -1,0 +1,10 @@
+import java.io.InputStream;
+
+
+public class Chunker {
+	
+	public static Chunk nextChunk(InputStream src){
+		
+	}
+	
+}

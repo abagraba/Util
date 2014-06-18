@@ -1,0 +1,22 @@
+import java.io.IOException;
+import java.io.InputStream;
+
+
+public class Chunker {
+	
+	public static Chunk nextChunk(InputStream src){
+		
+	}
+	
+	public static byte[] readBytes(InputStream src, int len){
+		byte[] data = new byte[len];
+		try {
+			if (len != src.read(data));
+		} catch (IOException e) {
+			System.err.println(e, Chunker.class);
+		}
+			return null;
+		return data;
+	}
+	
+}

@@ -1,0 +1,49 @@
+package PNGDecoder.Chunks;
+
+import PNGDecoder.Chunk;
+import PNGDecoder.ChunkRegistry;
+import PNGDecoder.Chunks.ChunkIHDR.IHDRColorType;
+
+public class ChunkpHYs extends Chunk {
+
+	private static int entriesPerRow = 8;
+
+	public static void register() {
+		ChunkRegistry.registerChunk("pHYs", ChunkpHYs.class);
+		System.out.println("pHYs Chunk Registered.");
+	}
+
+	public ChunkpHYs(int size, byte[] header, byte[] data, int crc) {
+		super(size, header, data, crc);
+	}
+
+	protected boolean valid() {
+		return size == 9;
+	}
+
+	protected String chunkDescription() {
+		return pad("X-axis:") + unsign(toInt(data, 0)) +"\n"+ pad("Y-axis:") + unsign(toInt(data, 4)) + "\n"+pad("Unit:") + pHYsUnit.get(data[8]);
+	}
+	
+	private enum pHYsUnit{
+		ratio("Ratio"), meter("Meters");
+
+		private String name;
+
+		public static pHYsUnit get(int i) {
+			if (i < 0 || i >= values().length)
+				return null;
+			return values()[i];
+		}
+
+		private pHYsUnit(String name) {
+			this.name = name;
+		}
+
+		public String toString() {
+			return name;
+		}
+	}
+
+
+}

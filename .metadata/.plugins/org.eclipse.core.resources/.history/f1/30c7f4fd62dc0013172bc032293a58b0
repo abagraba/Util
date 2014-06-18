@@ -1,0 +1,410 @@
+package com.mimvista.cloud.server.accounts;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import com.googlecode.objectify.Key;
+import com.googlecode.objectify.Objectify;
+import com.googlecode.objectify.Query;
+import com.mimvista.cloud.client.services.AdminService;
+import com.mimvista.cloud.models.CloudAccount;
+import com.mimvista.cloud.models.PaymentMethod;
+import com.mimvista.cloud.models.ProductVersion;
+import com.mimvista.cloud.models.Study;
+import com.mimvista.cloud.server.DAO;
+import com.mimvista.cloud.server.Halper;
+import com.mimvista.cloud.server.SadfoxServiceServlet;
+import com.mimvista.cloud.server.studies.queries.impl.StudyOwnerQuery;
+import com.mimvista.cloud.server.studies.queries.impl.StudyUIDQuery;
+import com.mimvista.cloud.server.users.UserHalper;
+import com.mimvista.cloud.shared.ContractSearchParams;
+import com.mimvista.cloud.shared.UserRegistrationInfo;
+import com.mimvista.cloud.shared.VersionSummary;
+import com.mimvista.cloud.shared.common.AccountInfo;
+import com.mimvista.cloud.shared.common.AccountInfo.ContractInfo;
+import com.mimvista.cloud.shared.common.AccountSummary;
+import com.mimvista.cloud.shared.common.FoxExceptions.InsufficientPermissionsException;
+import com.mimvista.cloud.shared.common.FoxUtil;
+import com.mimvista.cloud.shared.common.enums.AccountEnums.AccountStatus;
+import com.mimvista.cloud.shared.common.enums.AccountEnums.UserType;
+import com.mimvista.cloud.shared.common.enums.AdminEnums.Priority;
+import com.mimvista.cloud.shared.common.enums.PaymentEnums.PaymentType;
+import com.mimvista.cloud.shared.common.mim.StudyDetails;
+import com.mimvista.cloud.shared.common.mim.StudySearchParams.SearchMaskedUIDsParams;
+import com.mimvista.cloud.shared.common.version.VersionNumberCore;
+
+public class AdminServiceImpl extends SadfoxServiceServlet implements AdminService {
+	private static final long serialVersionUID = 1L;
+	private DAO dao = new DAO();
+	
+	
+	/*
+	 * EVERY PUBLIC METHOD IN THIS CLASS MUST CALL VERIFYADMINPRIVS()
+	 * 
+	 */
+	protected CloudAccount verifyAdminPrivs() throws InsufficientPermissionsException{
+		UserType userType = getSadfoxContext().getActor().getUserFields().getUserType();
+		if (userType != UserType.MIMSTAFF){
+			throw new InsufficientPermissionsException("Can't access admin services as a non-admin!");
+		}
+		return getSadfoxContext().getActor();
+	}
+	
+	@Override
+	public void setAccountStatus(long accountID, AccountStatus status) throws InsufficientPermissionsException {
+		verifyAdminPrivs();
+		DAO dao = new DAO();
+		CloudAccount acct = Halper.getById(CloudAccount.class, accountID);
+		acct.setStatus(status);
+		dao.ofy().put(acct);
+		return;
+	}
+
+	@Override
+	public List<AccountInfo> getAllMIMStaff() throws InsufficientPermissionsException{
+		CloudAccount currentUser = verifyAdminPrivs();
+		List<CloudAccount> allMIMStaff = UserHalper.getAllMIMStaff();
+		List<AccountInfo> infos = new ArrayList<AccountInfo>();
+		for (CloudAccount acct : allMIMStaff){
+			infos.add((new UserHalper(acct).getAccountSummary(currentUser)).getActor());
+		}
+		return infos;
+	}
+
+	@Override
+	public void setUserType(long accountID, UserType type) throws InsufficientPermissionsException{
+		verifyAdminPrivs();
+		CloudAccount user = dao.ofy().query(CloudAccount.class).filter("id", accountID).get();
+		if (user == null)
+			return;
+		new UserHalper(user).setUserType(type);
+	}
+
+	@Override
+	public Map<AccountSummary, List<ContractInfo>> getAllContracts(ContractSearchParams searchParams)	throws InsufficientPermissionsException {
+		String groupName = searchParams.getGroupName();
+		CloudAccount currentActor = verifyAdminPrivs();
+		
+		//Gotta handle group name searching separately.
+		if(!FoxUtil.isNullOrEmpty(groupName)){
+			Query<CloudAccount> query = dao.ofy().query(CloudAccount.class);
+			query.filter("groupFields.groupName =", groupName);
+			List<CloudAccount> list = query.list();
+			
+			Map<AccountSummary, List<ContractInfo>> ret = new HashMap<AccountSummary, List<ContractInfo>>();
+			for(CloudAccount ca : list){
+				ret.putAll(searchForContracts(searchParams, currentActor, ca));
+			}
+			return ret;
+		}else{
+			return searchForContracts(searchParams, currentActor, null);
+		}
+	}
+	
+	private Map<AccountSummary, List<ContractInfo>> searchForContracts(ContractSearchParams searchParams, CloudAccount currentActor, CloudAccount ancestor) throws InsufficientPermissionsException{
+		verifyAdminPrivs();
+		
+		String CSEEmail = searchParams.getCSEEmail();
+		String subscriptionNumber = searchParams.getSubscriptionNumber();
+		Date expirationStart = searchParams.getExpirationStart();
+		Date expirationEnd = searchParams.getExpirationEnd();
+		int numberResults = searchParams.getNumberResults();
+		
+		Query<PaymentMethod> query = dao.ofy().query(PaymentMethod.class);
+		query.filter("paymentType = ", PaymentType.CONTRACT);
+		
+		boolean hasSearchParams = false;
+		if(!FoxUtil.isNullOrEmpty(subscriptionNumber)){
+			query.filter("contract.contractNumber = ", subscriptionNumber);
+			hasSearchParams = true;
+		}
+		if(!FoxUtil.isNullOrEmpty(CSEEmail)){
+			query.filter("contract.mimContact = ", CSEEmail);
+			hasSearchParams = true;
+		}
+		if(expirationStart != null){
+			query.filter("expirationDate >=", expirationStart);
+			hasSearchParams = true;
+		}
+		if(expirationEnd != null){
+			query.filter("expirationDate <=", expirationEnd);
+			hasSearchParams = true;
+		}
+		if(ancestor != null){
+			query.ancestor(ancestor);
+		}
+		
+		// datastore-index to order by lastModifiedDate descending to allow if empty search parameters (no filters)
+		if (!hasSearchParams) {
+			query.order("-lastModifiedDate");
+		}
+		
+		query.limit(100); // set at 100, so we don't get too many results
+		List<PaymentMethod> list = query.list();
+		
+		if (hasSearchParams) {
+			sortPaymentMethods(list);
+		}
+		
+		Collection<CloudAccount> values;
+		LinkedHashMap<Key<CloudAccount>, List<PaymentMethod>> ancestors = new LinkedHashMap<Key<CloudAccount>, List<PaymentMethod>>();
+		if(ancestor != null){
+			values = new ArrayList<CloudAccount>();
+			values.add(ancestor);
+			ancestors.put(ancestor.getKey(), list);
+		}else{
+			for(PaymentMethod payment : list){
+				List<PaymentMethod> contracts = ancestors.get(payment.getParentKey());
+				if(contracts == null){
+					contracts = new ArrayList<PaymentMethod>();
+					ancestors.put(payment.getParentKey(), contracts);
+				}
+				contracts.add(payment);
+			}
+			values = dao.ofy().get(ancestors.keySet()).values();
+		}
+		LinkedHashMap<AccountSummary, List<ContractInfo>> ret = new LinkedHashMap<AccountSummary, List<ContractInfo>>();
+		for(CloudAccount group : values){
+			if (group.getStatus() != AccountStatus.NORMAL) {
+				continue;
+			}
+			AccountSummary accountSummary = new CloudAccountHalper(group).getAccountSummary(currentActor, false);
+			List<PaymentMethod> payments = ancestors.get(group.getKey());
+			List<ContractInfo> infos = new ArrayList<ContractInfo>();
+			for(PaymentMethod payment : payments){
+				infos.add(payment.getContract().convertToContractInfo());
+			}
+			ret.put(accountSummary, infos);
+		}
+		return ret;
+	}
+
+	private void sortPaymentMethods(List<PaymentMethod> list) {
+		Collections.sort(list, new Comparator<PaymentMethod>() {
+			@Override
+			public int compare(PaymentMethod o1, PaymentMethod o2) {
+				return o2.getLastModifiedDate().compareTo(o1.getLastModifiedDate());
+			}
+		});
+	}
+	
+	@Override
+	public void setFreebies(long accountID, int uploads, int views) throws InsufficientPermissionsException {
+		verifyAdminPrivs();
+		CloudAccount acct = Halper.getById(CloudAccount.class, accountID);
+		acct.getFreebies().setFreeUploads(uploads);
+		acct.getFreebies().setFreeViews(views);
+		dao.ofy().put(acct);
+	}
+
+	@Override
+	public UserRegistrationInfo getUserRegistration(Long accountID) throws InsufficientPermissionsException {
+		verifyAdminPrivs();
+		return UserRegistrationHalper.getUserRegInfo(accountID);
+	}
+	
+	@Override
+	public List<VersionSummary> getProductList() throws InsufficientPermissionsException {
+		verifyAdminPrivs();
+		DAO dao = new DAO();
+		List<ProductVersion> list = dao.ofy().query(ProductVersion.class).list();
+		List<VersionSummary> versionList = new ArrayList<VersionSummary>();
+		for(ProductVersion item : list){
+			if((item.getProductName() == null) ||
+					(item.getCurrentVersion() == null) ||
+					(item.getUrl() == null)){
+				continue;
+			}
+			VersionSummary newVersion = new VersionSummary(item.getProductName(), item.getCurrentVersion(), item.getUrl(), null, item.getDate());
+			versionList.add(newVersion);
+		}
+		return versionList;
+	}
+
+	@Override
+	public void addNewProduct(VersionSummary summary, Priority priority) throws InsufficientPermissionsException, IllegalArgumentException {
+		verifyAdminPrivs();
+		
+		if (!VersionNumberCore.isValidVersionNumber(summary.getProductVersion())) {
+			throw new IllegalArgumentException("Invalid product version: " + summary.getProductVersion() + " could not be parsed as a VersionNumber!");
+		}
+		ProductVersion productVersion = new ProductVersion();
+		productVersion.setProductName(summary.getProductName());
+		productVersion.setCurrentVersion(summary.getProductVersion());
+		productVersion.setUrl(summary.getLocation());
+		productVersion.setPriority(priority);
+		new DAO().ofy().put(productVersion);
+	}
+	
+	@Override
+	public void deleteVersionInfo(VersionSummary summary) throws InsufficientPermissionsException {
+		verifyAdminPrivs();
+
+		DAO dao = new DAO();
+		Objectify ofy = dao.ofy();
+		
+		String productName = summary.getProductName();
+		String productVersion = summary.getProductVersion();
+		String location = summary.getLocation();
+		
+		Query<ProductVersion> query = ofy.query(ProductVersion.class);
+		query.filter("productName =", productName);
+		List<ProductVersion> itemList = query.list();
+		List<ProductVersion> itemsToDelete = new ArrayList<ProductVersion>();
+		for(ProductVersion item: itemList){
+			if(productVersion.equals(item.getCurrentVersion())){
+				if(location.equals(item.getUrl())){
+					itemsToDelete.add(item);
+				}
+			}
+		}
+		
+		ofy.delete(itemsToDelete);
+	}
+
+	@Override
+	public List<StudyDetails> getStudiesByAccount(String account) throws InsufficientPermissionsException {
+		verifyAdminPrivs();
+		
+		List<Study> studyQuery = doQuery(account);
+		List<StudyDetails> studies = new ArrayList<StudyDetails>();
+		for(Study study : studyQuery){
+			studies.add(setDetails(study));
+		}
+		return studies;
+	}
+
+	@Override
+	public List<StudyDetails> getStudiesByDate(String account, String date)	throws InsufficientPermissionsException {
+		verifyAdminPrivs();
+		
+		List<Study> studyQuery = doQuery(account);
+		List<StudyDetails> studies = new ArrayList<StudyDetails>();
+		for(Study study : studyQuery){
+			String simpleDate = study.getExpirationDate().getMonth() + "/" + study.getExpirationDate().getDate() + "/" + study.getExpirationDate().getYear();
+			if(simpleDate.equals(date)){
+				studies.add(setDetails(study));
+			}
+		}
+		return studies;
+	}
+	
+	@Override
+	public List<StudyDetails> getStudiesByContractNumber(String contract) throws InsufficientPermissionsException {
+		verifyAdminPrivs();
+		
+		List<CloudAccount> contractedAccounts = PaymentMethodHalper.getAllAccountsForContract(contract);
+		List<StudyDetails> studies = new ArrayList<StudyDetails>();
+		for(CloudAccount account : contractedAccounts){
+			
+			List<Study> studyQuery = new StudyOwnerQuery(account.getKey()).query().list();
+			for(Study study : studyQuery){
+				if(!studies.contains(study)){
+					studies.add(setDetails(study));
+				}
+			}
+		}
+		return studies;
+	}
+
+	@Override
+	public void updateExpirationDateByList(List<StudyDetails> studies, String expirationDate) throws InsufficientPermissionsException {
+		verifyAdminPrivs();
+		
+		String newExpirationDate = "";
+		DAO dao = new DAO();
+		Objectify ofy = dao.ofy();
+		for(StudyDetails study : studies){
+			newExpirationDate = formatDate(study, expirationDate);
+			Set<String> uid = new HashSet<String>();
+			uid.add(study.getStudyUIDmasked());
+			StudyUIDQuery query = new StudyUIDQuery(new SearchMaskedUIDsParams(uid));
+			Key<Study> key = new Key<Study>(Study.class, study.getDbKeyId());
+			Study thisStudy = ofy.get(key);
+			thisStudy.setExpirationDate(new Date(newExpirationDate));
+			ofy.put(thisStudy);
+		}
+	}
+	
+	@Override
+	public void setGtalkId(long accountID, String gTalkId) throws InsufficientPermissionsException {
+		verifyAdminPrivs();
+		CloudAccount accountToChange = dao.ofy().get(new Key<CloudAccount>(CloudAccount.class, accountID));
+		if(accountToChange.isUser()){
+			accountToChange.getUserFields().setGtalkId(gTalkId);
+			dao.ofy().put(accountToChange);
+		}
+	}
+
+	@Override
+	public void updateExpirationDate(StudyDetails study, Date expirationDate) throws InsufficientPermissionsException {
+		verifyAdminPrivs();
+		
+		DAO dao = new DAO();
+		Objectify ofy = dao.ofy();
+		Key<Study> key = new Key<Study>(Study.class, study.getDbKeyId());
+		Study thisStudy = ofy.get(key);
+		thisStudy.setExpirationDate(expirationDate);
+		ofy.put(thisStudy);
+	}
+		
+	private String formatDate(StudyDetails study, String expirationDate){
+		int daysToAdd;
+		try {
+			daysToAdd = Integer.parseInt(expirationDate);
+			study.getExpDate().setDate(study.getExpDate().getDate() + daysToAdd);
+			expirationDate = study.getExpDate().toString();
+		} catch (NumberFormatException e) {
+			String dates[] = expirationDate.split("/");
+			if(dates.length != 3){
+				// do not change if error in date, should have already been caught though
+				return study.getExpDate().toString();
+			}
+		}
+		return expirationDate;
+	}
+		
+	private StudyDetails setDetails(Study study){
+		if (study == null) {
+			return null;
+		}
+		StudyDetails details = new StudyDetails();
+		details.setStudyUIDmasked(study.getStudyUID());
+		details.setStudyDescription(study.getStudyDesc());
+		details.setStudyLocation(study.getLocation());
+		details.setPatientNameTrunc(study.getPatientName());
+		details.setExpDate(study.getExpirationDate());
+		details.setDbKeyId(study.getId());
+		details.setStudyDate(study.getStudyDate());
+		return details;
+	}
+	
+	private List<Study> doQuery(String account){
+		DAO dao = new DAO();
+		Objectify ofy = dao.ofy();
+		Query<CloudAccount> accountQuery = ofy.query(CloudAccount.class).filter("userFields.email", account);
+		if(FoxUtil.isNullOrEmpty(accountQuery.list())){
+			accountQuery = ofy.query(CloudAccount.class).filter("groupFields.groupName", account);
+		}
+		CloudAccount ca = null;
+		for(CloudAccount cldAcct : accountQuery){
+			if(cldAcct.isCancelled()){
+				continue;
+			}
+			ca = cldAcct;
+		}
+		
+		StudyOwnerQuery query = new StudyOwnerQuery(ca.getKey());
+		return query.query().list();
+	}
+
+}

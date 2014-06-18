@@ -1,0 +1,7 @@
+import java.util.HashMap;
+
+
+public class ChunkRegistry {
+
+	HashMap<String, Class<Chunk>> registry = new HashMap<String, Class<Chunk>>();
+}

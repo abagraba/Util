@@ -1,7 +1,0 @@
-package PNGDecoder.Chunks;
-
-import Chunk;
-
-public class ChunkpHYs extends Chunk {
-
-}

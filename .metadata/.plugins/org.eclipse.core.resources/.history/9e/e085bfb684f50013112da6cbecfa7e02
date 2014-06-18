@@ -1,5 +1,0 @@
-package com.mimvista.mimcloud.commands;
-
-public class GetS3SEriesHeadURLCommand {
-
-}

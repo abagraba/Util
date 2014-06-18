@@ -1,7 +1,0 @@
-import java.util.HashMap;
-
-
-public class ChunkRegistry {
-
-	HashMap<String, Class> registry = new HashMap<String, Class>();
-}

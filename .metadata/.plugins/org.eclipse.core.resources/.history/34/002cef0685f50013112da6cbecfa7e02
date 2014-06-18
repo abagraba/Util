@@ -1,7 +1,0 @@
-package com.mimvista.mimcloud.commands;
-
-import com.mimvista.mimcloud.commands.CloudCommands.ReleasedCommand;
-
-public class GetS3SeriesHeadURLCommand extends ReleasedCommand<Map<Long, Map<String, S3SeriesURL>>{
-	
-}

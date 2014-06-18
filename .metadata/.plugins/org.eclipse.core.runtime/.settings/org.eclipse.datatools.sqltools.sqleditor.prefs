@@ -1,9 +1,0 @@
-Double\ quoted\ string=0,0,0,0,0,204,204,153
-Identifier=0,0,0,0,0,102,204,51
-Keyword=0,0,0,0,0,170,68,170
-Multi-line\ comment=0,0,0,0,0,102,102,102
-Others=0,0,0,0,0,255,255,255
-Single\ quoted\ string=0,0,0,0,0,204,204,153
-Single-line\ comment=0,0,0,0,0,102,102,102
-Type=0,0,0,0,0,204,51,51
-eclipse.preferences.version=1

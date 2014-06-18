@@ -1,8 +1,0 @@
-
-public class IHDRChunk extends Chunk {
-
-	public IHDRChunk(int size, byte[] header, byte[] data, int crc) {
-		super(size, header, data, crc);
-	}
-
-}

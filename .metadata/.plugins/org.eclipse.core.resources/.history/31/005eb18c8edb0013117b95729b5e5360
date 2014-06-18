@@ -1,8 +1,0 @@
-
-public class Chunk {
-
-	public Chunk(int size, String header, byte[] data, int crc) {
-		// TODO Auto-generated constructor stub
-	}
-
-}

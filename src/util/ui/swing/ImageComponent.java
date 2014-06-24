@@ -8,8 +8,8 @@ import javax.swing.JComponent;
 
 public class ImageComponent extends JComponent {
 
-	private static final long serialVersionUID = -1965490455275908662L;
-
+	private static final long serialVersionUID = 1587086567331765214L;
+	
 	private Image image;
 
 	public ImageComponent() {
@@ -23,12 +23,20 @@ public class ImageComponent extends JComponent {
 		if (this.image == image)
 			return;
 		this.image = image;
-		Dimension size = image != null ? new Dimension(image.getWidth(null), image.getHeight(null)) : new Dimension();
-		setMinimumSize(size);
-		setMaximumSize(size);
-		setPreferredSize(size);
 		revalidate();
 		repaint();
+	}
+	
+	public Dimension getMinimumSize(){
+		return new Dimension(image.getWidth(null), image.getHeight(null));
+	}
+
+	public Dimension getMaximumSize(){
+		return new Dimension(image.getWidth(null), image.getHeight(null));
+	}
+
+	public Dimension getPreferredSize(){
+		return new Dimension(image.getWidth(null), image.getHeight(null));
 	}
 
 	public void paintComponent(Graphics g) {

@@ -2,6 +2,7 @@ package PNGDecoder.Chunks;
 
 import java.util.Date;
 
+import util.formatting.TextFormat;
 import PNGDecoder.Chunk;
 import PNGDecoder.ChunkRegistry;
 
@@ -29,7 +30,7 @@ public class ChunktIME extends Chunk {
 	}
 
 	protected String chunkDescription() {
-		return pad("Last Modified:") + padtime((data[4] + 11) % 12 + 1) + ":" + padtime(data[5]) + ":" + padtime(data[6]) + " " + (data[4] < 12 ? "A" : "P") + "M UTC\t"
+		return TextFormat.pad("Last Modified:") + padtime((data[4] + 11) % 12 + 1) + ":" + padtime(data[5]) + ":" + padtime(data[6]) + " " + (data[4] < 12 ? "A" : "P") + "M UTC\t"
 				+ tIMEMonth.get(data[2]) + " " + data[3] + ", " + (data[0] * 256 + data[1]);
 	}
 

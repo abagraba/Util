@@ -1,5 +1,7 @@
 package PNGDecoder.Chunks;
 
+import util.formatting.PrimitiveFormat;
+import util.formatting.TextFormat;
 import PNGDecoder.Chunk;
 import PNGDecoder.ChunkRegistry;
 
@@ -14,7 +16,7 @@ public class ChunkgAMA extends Chunk {
 
 	public ChunkgAMA(int size, byte[] header, byte[] data, int crc) {
 		super(size, header, data, crc);
-		gamma = unsign(toInt(data, 0)) * 0.00001f;
+		gamma = PrimitiveFormat.unsign(PrimitiveFormat.toInt(data, 0)) * 0.00001f;
 	}
 
 	protected boolean valid() {
@@ -22,6 +24,6 @@ public class ChunkgAMA extends Chunk {
 	}
 
 	protected String chunkDescription() {
-		return pad("Gamma Correction:") + gamma + (gamma != 0 ? "\t\t1/" + (1 / gamma) : "");
+		return TextFormat.pad("Gamma Correction:") + gamma + (gamma != 0 ? "\t\t1/" + (1 / gamma) : "");
 	}
 }

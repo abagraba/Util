@@ -1,5 +1,9 @@
 package util.networking.http;
 
-public class HTTPRequest {
+import java.net.URL;
 
+public class HTTPRequest {
+	public HTTPRequest(HTTPMethod method, URL url) {
+
+	}
 }

@@ -1,5 +1,7 @@
 package PNGDecoder.Chunks;
 
+import util.formatting.PrimitiveFormat;
+import util.formatting.TextFormat;
 import PNGDecoder.Chunk;
 import PNGDecoder.ChunkRegistry;
 
@@ -18,8 +20,8 @@ public class ChunkIHDR extends Chunk {
 
 	public ChunkIHDR(int size, byte[] header, byte[] data, int crc) {
 		super(size, header, data, crc);
-		width = unsign(toInt(data, 0));
-		height = unsign(toInt(data, 4));
+		width = PrimitiveFormat.unsign(PrimitiveFormat.toInt(data, 0));
+		height = PrimitiveFormat.unsign(PrimitiveFormat.toInt(data, 4));
 		colorType = IHDRColorType.get(data[9]);
 		compressionType = IHDRCompressionType.get(data[10]);
 		interlaceType = IHDRInterlaceType.get(data[12]);
@@ -31,13 +33,13 @@ public class ChunkIHDR extends Chunk {
 
 	protected String chunkDescription() {
 		return /**/
-		pad("Width:") + width + " pixels\n" + /**/
-		pad("Height:") + height + " pixels\n" + /**/
-		pad("Bit Depth:") + data[8] + " bits\t\t" + (validBitDepth(data[8], data[9]) ? "" : "[Invalid/Unrecognized bit depth]") + "\n" + /**/
-		pad("Color Type:") + colorType + "\n" + /**/
-		pad("Compression Method:") + compressionType + "\n" + /**/
-		pad("Filter Method:") + data[11] + "\n" + /**/
-		pad("Interlace Method:") + interlaceType;
+		TextFormat.pad("Width:") + width + " pixels\n" + /**/
+		TextFormat.pad("Height:") + height + " pixels\n" + /**/
+		TextFormat.pad("Bit Depth:") + data[8] + " bits\t\t" + (validBitDepth(data[8], data[9]) ? "" : "[Invalid/Unrecognized bit depth]") + "\n" + /**/
+		TextFormat.pad("Color Type:") + colorType + "\n" + /**/
+		TextFormat.pad("Compression Method:") + compressionType + "\n" + /**/
+		TextFormat.pad("Filter Method:") + data[11] + "\n" + /**/
+		TextFormat.pad("Interlace Method:") + interlaceType;
 	}
 
 	private static boolean validBitDepth(int depth, int color) {

@@ -1,5 +1,6 @@
 package PNGDecoder.Chunks;
 
+import util.formatting.TextFormat;
 import PNGDecoder.Chunk;
 import PNGDecoder.ChunkRegistry;
 
@@ -58,7 +59,7 @@ public class ChunkPLTE extends Chunk {
 		}
 
 		public String toString() {
-			return "0x" + toHex(r) + toHex(g) + toHex(b);
+			return "0x" + TextFormat.toHex(r) + TextFormat.toHex(g) + TextFormat.toHex(b);
 		}
 	}
 

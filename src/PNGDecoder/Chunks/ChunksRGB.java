@@ -1,5 +1,6 @@
 package PNGDecoder.Chunks;
 
+import util.formatting.TextFormat;
 import PNGDecoder.Chunk;
 import PNGDecoder.ChunkRegistry;
 
@@ -23,7 +24,7 @@ public class ChunksRGB extends Chunk {
 	}
 
 	protected String chunkDescription() {
-		return pad("Rendering Intent:") + intent;
+		return TextFormat.pad("Rendering Intent:") + intent;
 	}
 
 	public static enum sRGBIntent {

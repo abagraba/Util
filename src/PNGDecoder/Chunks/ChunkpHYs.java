@@ -1,5 +1,7 @@
 package PNGDecoder.Chunks;
 
+import util.formatting.PrimitiveFormat;
+import util.formatting.TextFormat;
 import PNGDecoder.Chunk;
 import PNGDecoder.ChunkRegistry;
 
@@ -16,8 +18,8 @@ public class ChunkpHYs extends Chunk {
 
 	public ChunkpHYs(int size, byte[] header, byte[] data, int crc) {
 		super(size, header, data, crc);
-		xaxis = unsign(toInt(data, 0));
-		yaxis = unsign(toInt(data, 4));
+		xaxis = PrimitiveFormat.unsign(PrimitiveFormat.toInt(data, 0));
+		yaxis = PrimitiveFormat.unsign(PrimitiveFormat.toInt(data, 4));
 		unit = pHYsUnit.get(data[8]);
 	}
 
@@ -27,9 +29,9 @@ public class ChunkpHYs extends Chunk {
 
 	protected String chunkDescription() {
 		return /**/
-		pad("X-axis:") + xaxis + "\n" + /**/
-		pad("Y-axis:") + yaxis + "\n" + /**/
-		pad("Unit:") + unit;
+		TextFormat.pad("X-axis:") + xaxis + "\n" + /**/
+		TextFormat.pad("Y-axis:") + yaxis + "\n" + /**/
+		TextFormat.pad("Unit:") + unit;
 	}
 
 	public static enum pHYsUnit {

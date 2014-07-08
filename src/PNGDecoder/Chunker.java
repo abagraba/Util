@@ -4,6 +4,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+
+import util.formatting.PrimitiveFormat;
+import util.formatting.TextFormat;
  
 public class Chunker {
 
@@ -19,10 +22,10 @@ public class Chunker {
 			e.printStackTrace();
 			return new Chunk(0, "IEND".getBytes(), new byte[] {}, -1371381886);
 		}
-		int chunkSize = Chunk.toInt(size);
+		int chunkSize = PrimitiveFormat.toInt(size);
 		if (chunkSize < 0) {
 			System.err.println("Negative chunk size: \t"
-					+ Chunk.toHex(size, 0, 4) + "\t" + chunkSize);
+					+ TextFormat.toHex(size, 0, 4) + "\t" + chunkSize);
 			return new Chunk(0, "IEND".getBytes(), new byte[] {}, -1371381886);
 		}
 		byte[] chunkData = new byte[chunkSize];
@@ -33,7 +36,7 @@ public class Chunker {
 			e.printStackTrace();
 			return new Chunk(0, "IEND".getBytes(), new byte[] {}, -1371381886);
 		}
-		int crcval = Chunk.toInt(crc);
+		int crcval = PrimitiveFormat.toInt(crc);
 
 		Class<? extends Chunk> impl = ChunkRegistry
 				.getChunkImplementation(new String(header));

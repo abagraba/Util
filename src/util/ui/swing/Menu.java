@@ -8,7 +8,6 @@ import javax.swing.JComponent;
 public class Menu extends JComponent {
 
 	private static final String[] none = new String[0];
-	private static final Insets defInset = new Insets(5, 5, 5, 5);
 
 	private static final boolean HORIZONTAL = true;
 	private static final boolean VERTICAL = false;
@@ -26,7 +25,7 @@ public class Menu extends JComponent {
 
 	/**/
 
-	public int getSelection() {
+	public int getSelectionIndex() {
 		return index;
 	}
 

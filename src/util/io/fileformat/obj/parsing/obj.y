@@ -1,15 +1,17 @@
 %{
 import java.io.IOException;
 import java.io.Reader;
-import java.util.LinkedList;
-import java.io.InputStream;
 
+import util.io.fileformat.obj.Element;
+import util.io.fileformat.obj.Element.Type;
 %}
 
 %token	SLASH
+%token	NL
       
 %token	INT
 %token	FLOAT
+%token	STRING
       
 %token	VERTEX		
 %token	TEXTURE		
@@ -57,55 +59,114 @@ import java.io.InputStream;
 
 
 %%
-file		:	stmt								{  }
-			| 	file stmt							{  }
+
+end			:	file stmt
+			;
+
+file		:	
+			| 	file stmt NL						{  }
+			| 	file exception						{ System.out.println("\tReadjusting frame."); }
 			;	
 
-stmt		:	vertex
-			|	texture
-			|	normal
+exception	:	VERTEX error NL						{ data.corruptVertex(); }
+			|	TEXTURE error NL					{ data.corruptTexture(); }
+			|	NORMAL error NL						{ data.corruptNormal(); }
+			|	FACE error NL						{ data.corruptElement(); }
+			|	LIBRARY error NL					{ System.out.println("Invalid material library definition."); }
+			|	MATERIAL error NL					{ System.out.println("Invalid material definition."); }
+			|	GROUP error NL						{ System.out.println("Invalid group definition."); }
+			|	error NL							{ printError(); }
 			;
 
-vertex		:	VERTEX FLOAT FLOAT FLOAT			{ data.addVertex($2, $3, $4); }
+/*****************/		
+/*Core Constructs*/
+/*****************/		
+stmt		:	
+			|	definition
+			|	element
+			|	group								
+			|	library
+			|	material
 			;
-texture		:	TEXTURE FLOAT FLOAT					{ data.addTexture($2, $3); }
+
+definition	:	vertex
+			|   texture
+			|   normal
+			;	
+
+/**************/		
+/*Vertex Stuff*/
+/**************/		
+vertex		:	VERTEX FLOAT FLOAT FLOAT			{ data.addVertex($2, $3, $4); $2.freeValue(); $3.freeValue(); $4.freeValue(); }
 			;
-normal		:	NORMAL FLOAT FLOAT FLOAT			{ data.addNormal($2, $3, $4); }
+texture		:	TEXTURE FLOAT FLOAT					{ data.addTexture($2, $3); $2.freeValue(); $3.freeValue(); }
 			;
-		
-element		:	line
+normal		:	NORMAL FLOAT FLOAT FLOAT			{ data.addNormal($2, $3, $4); $2.freeValue(); $3.freeValue(); $4.freeValue(); }
+			;
+
+/***************/		
+/*Element Stuff*/
+/***************/		
+element		:	point
+			|	line
 			|	face
 			;
-		
-point		:	POINT INT
+
+point		:	POINT v								{ data.addElement(new Element(Type.POINT, new int[]{$2.i})); $2.freeValue(); }
 			;
-line		:	LINE INT INT						{ ints = new IntArray(new int[]{$2.i, $3.i}); }
-			|	line INT							{ ints.add($2.i); }
+line		:	LINE vchain2						{ data.addElement(new Element(Type.LINE, $2.ints.toArray())); $2.freeValue(); }
 			;
-facev		:	FACE INT INT INT					{ ints = new IntArray(new int[]{$2.i, $3.i}); }
-			|	face INT							{ ints.add($2.i); }
+face		:	FACE vchain3						{ data.addElement(new Element(Type.FACEV, $2.ints.toArray())); $2.freeValue(); }
+			|	FACE vtchain3						{ data.addElement(new Element(Type.FACEVT, $2.ints.toArray())); $2.freeValue(); }
+			|	FACE vnchain3						{ data.addElement(new Element(Type.FACEVN, $2.ints.toArray())); $2.freeValue(); }
+			|	FACE vtnchain3						{ data.addElement(new Element(Type.FACEVTN, $2.ints.toArray())); $2.freeValue(); }
+			;
+			
+/********/		
+/*Groups*/
+/********/		
+group		:	GROUP STRING						{ data.setGroup($2); }
 			;
 
+/***********/		
+/*Materials*/
+/***********/	
+library		:	LIBRARY STRING						{ $$ = $1; }
+			;	
+material	:	MATERIAL STRING						{ data.setMaterial($2); }
+			;
+
+/******************/		
+/*Number Arguments*/
+/******************/		
+v			:	INT									{ $$ = $1; $$.i = data.evaluateVertex($1); }
+			;			
+vt			:	INT SLASH INT						{ $$ = $1; $$.ints = new IntArray(data.evaluateVertex($1), data.evaluateTexture($3)); $3.freeValue(); }
+			;
+vn			:	INT SLASH SLASH INT					{ $$ = $1; $$.ints = new IntArray(data.evaluateVertex($1), data.evaluateNormal($4)); $4.freeValue(); }
+			;
+vtn			:	INT SLASH INT SLASH INT				{ $$ = $1; $$.ints = new IntArray(data.evaluateVertex($1), data.evaluateTexture($3), data.evaluateNormal($5)); $3.freeValue(); $5.freeValue(); }
+			;
+	
+vchain2		:	v v									{ $$ = $1; $$.ints = new IntArray($1.i, $2.i); $2.freeValue(); }
+			|	vchain2 v							{ $$ = $1; $$.ints.add($2.i); $2.freeValue(); }
+			;	
 			
-vt			:	INT SLASH INT
+vchain3		:	v v v								{ $$ = $1; $$.ints = new IntArray($1.i, $2.i, $3.i); $2.freeValue(); $3.freeValue(); }
+			|	vchain3 v							{ $$ = $1; $$.ints.add($2.i); $2.freeValue(); }
 			;
-vn			:	INT SLASH SLASH INT
-			;
-vtn			:	INT SLASH INT SLASH INT
-			;
-			
-vchain		:	INT INT INT							{ ints = new IntArray(new int[]{$1.i, $2.i, $3.i}); }
-			|	vchain INT							( ints.add($2.i); )
-			;
-vtchain		:	vt vt vt							{ ints = new IntArray(new int[]{$1.i, $2.i, $3.i}); }
-			|	vtchain vt							( ints.add($2.i); )
+vtchain3	:	vt vt vt							{ $$ = $1; $$.ints.append($2.ints, $3.ints); $2.freeValue(); $3.freeValue(); }
+			|	vtchain3 vt							{ $$ = $1; $$.ints.append($2.ints); $2.freeValue(); }
 			;			
-vnchain		:	vn vn vn							{ ints = new IntArray(new int[]{$1.i, $2.i, $3.i}); }
-			|	vnchain vn							( ints.add($2.i); )
+vnchain3	:	vn vn vn							{ $$ = $1; $$.ints.append($2.ints, $3.ints); $2.freeValue(); $3.freeValue(); }
+			|	vnchain3 vn							{ $$ = $1; $$.ints.append($2.ints); $2.freeValue(); }
 			;			
-vtnchain	:	vtn vtn vtn
-			|	vtnchain vtn
+vtnchain3	:	vtn vtn vtn 						{ $$ = $1; $$.ints.append($2.ints, $3.ints); $2.freeValue(); $3.freeValue(); }
+			|	vtnchain3 vtn						{ $$ = $1; $$.ints.append($2.ints); $2.freeValue(); }
 			;			
+
+/******************/		
+/******************/		
 
 			
 %%
@@ -113,7 +174,6 @@ vtnchain	:	vtn vtn vtn
 	private OBJLexer lexer;
 
 	private OBJRawData data = new OBJRawData();
-	private IntArray ints;
 	
 	private int yylex () {
 		int token = -1;
@@ -129,8 +189,12 @@ vtnchain	:	vtn vtn vtn
 
 
 	public void yyerror (String error) {
-		System.out.print("Error: [" + (lexer.line() + 1 )+ ':' + lexer.yytext() + "] :" + error);
 	}
+	
+	public void printError(){
+		System.out.println("Parsing Error: " + lexer.line() + ':' + lexer.pos() + " [" + lexer.yytext() + "]");
+	}
+	
 
 
 	public OBJParser(Reader r) {

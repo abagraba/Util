@@ -45,11 +45,15 @@ public class Compiler {
 		System.out.println("Process terminated.");
 		System.out.println();
 	}
-
-	public static void main(String[] args) {
+	
+	public static void compile(){
 		runProcess(jflexcmd);
 		runProcess(yacccmd);
 		runProcess(cleancmd);
+	}
+
+	public static void main(String[] args) {
+		compile();
 	}
 
 }

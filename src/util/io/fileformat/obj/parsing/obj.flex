@@ -29,7 +29,8 @@ import java.io.Reader;
 %}
 
 INT				=	[+-]?[1-9][0-9]*
-FLOAT			=	[+-]?[0-9]+\.[0-9]+
+FLOAT			=	[+-]?\d+\.[0-9]+
+STRING			=	[\.\w]+
 
 VERTEX			=	v
 TEXTURE			=	vt
@@ -76,19 +77,18 @@ SURFACEAPPROX	=	stech
 
 NL			=   (\r\n|[\n\r]) 
 
-%x STR
 %x COMMENT
 
 %%
 
-<COMM>{
-	{NL}			{ yyline++; yychar = 0; yybegin(YYINITIAL); }
+<COMMENT>{
+	{NL}			{ yyline++; yychar = 0; yybegin(YYINITIAL); return OBJParser.NL; }
 	.				{ yychar++; }
 }         
 
 	#				{ yychar++; yybegin(COMMENT); }
 
-	/				{ yychar++; return OBJParser.SLASH; }
+	\/				{ yychar++; return OBJParser.SLASH; }
 
 	{INT}			{ yychar += yytext().length(); yyparser.yylval = OBJValue.newValue(Integer.parseInt(yytext())); return OBJParser.INT; }
 	{FLOAT}			{ yychar += yytext().length(); yyparser.yylval = OBJValue.newValue(Float.parseFloat(yytext())); return OBJParser.FLOAT; }
@@ -135,6 +135,9 @@ NL			=   (\r\n|[\n\r])
 	{CURVEAPPROX}	{ yychar += yytext().length(); return OBJParser.CURVEAPPROX; }
 	{SURFACEAPPROX}	{ yychar += yytext().length(); return OBJParser.SURFACEAPPROX; }
 
-	{NL}			{ yyline++; yychar = 0; }
+	{STRING}		{ yychar += yytext().length(); yyparser.yylval = OBJValue.newValue(yytext()); return OBJParser.STRING; }
+
+	\\{NL}			{ yyline++; yychar = 0; }
+	{NL}			{ yyline++; yychar = 0; return OBJParser.NL; }
 	[\t ]			{ yychar++;  }
 	.				{ System.err.println("Unexpected ["+ yytext() + "] at line " + line() + ":" + pos() + "."); }

@@ -2,18 +2,21 @@ package util.io.fileformat.obj.parsing;
 
 import java.util.LinkedList;
 
+import util.IntArray;
+
+
+
 public class OBJValue {
 
-	private final static LinkedList<OBJValue> values = new LinkedList<OBJValue>();
+	private final static LinkedList<OBJValue>	values	= new LinkedList<OBJValue>();
 
-	public int i;
-	public float f;
+	public int									i;
+	public float								f;
 
-	public String s;
-	public IntArray ints;
+	public String								s;
+	public IntArray								ints;
 
-	protected OBJValue() {
-	}
+	protected OBJValue() {}
 
 	public void freeValue() {
 		ints = null;
@@ -31,7 +34,7 @@ public class OBJValue {
 		val.s = s;
 		return val;
 	}
-	
+
 	public static OBJValue newValue(float f) {
 		OBJValue val = getValue();
 		val.f = f;

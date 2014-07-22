@@ -1,4 +1,4 @@
-package util.io.fileformat.obj.parsing;
+package util;
 
 import java.util.Arrays;
 

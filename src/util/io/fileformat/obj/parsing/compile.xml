@@ -1,8 +1,38 @@
 <project name="Flex Yacc Builder" default="build">
 
-	
+	<property name="res" value="..\..\..\..\compiling" />
+	<property name="target" value="obj" />
+
 	<target name="build">
-		
+		<antcall target="clean" />
+		<antcall target="compileflex" />
+		<antcall target="compileyacc" />
+	</target>
+
+	<target name="clean">
+		<delete>
+			<fileset dir=".">
+				<include name="OBJLexer.java" />
+				<include name="OBJParser.java" />
+			</fileset>
+		</delete>
+	</target>
+
+	<target name="compileflex">
+		<java jar="${res}\jflex.jar" fork="yes">
+			<arg value="-v" />
+			<arg value="--noinputstreamctor" />
+			<arg value="${target}.flex" />
+		</java>
+	</target>
+	<target name="compileyacc">
+		<exec executable="${res}\yacc.exe" resolveexecutable="true">
+			<arg value="-v" />
+			<arg value="-Jclass=OBJParser" />
+			<arg value="-Jpackage=util.io.fileformat.obj.parsing" />
+			<arg value="-Jsemantic=OBJValue" />
+			<arg value="${target}.y" />
+		</exec>
 	</target>
 
 </project>

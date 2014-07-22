@@ -2,6 +2,9 @@
 import java.io.IOException;
 import java.io.Reader;
 
+
+import util.IntArray;
+
 import util.io.fileformat.obj.Element;
 import util.io.fileformat.obj.Element.Type;
 %}
@@ -98,6 +101,7 @@ definition	:	vertex
 /*Vertex Stuff*/
 /**************/		
 vertex		:	VERTEX FLOAT FLOAT FLOAT			{ data.addVertex($2, $3, $4); $2.freeValue(); $3.freeValue(); $4.freeValue(); }
+			|	VERTEX FLOAT FLOAT FLOAT FLOAT		{ data.addVertex($2, $3, $4, $5); $2.freeValue(); $3.freeValue(); $4.freeValue(); }
 			;
 texture		:	TEXTURE FLOAT FLOAT					{ data.addTexture($2, $3); $2.freeValue(); $3.freeValue(); }
 			;
@@ -125,15 +129,17 @@ face		:	FACE vchain3						{ data.addElement(new Element(Type.FACEV, $2.ints.toAr
 /********/		
 /*Groups*/
 /********/		
-group		:	GROUP STRING						{ data.setGroup($2); }
+object		:	OBJECT STRING						{ data.setObject($2); $2.freeValue(); }
+			;
+group		:	GROUP STRING						{ data.setGroup($2); $2.freeValue(); }
 			;
 
 /***********/		
 /*Materials*/
 /***********/	
-library		:	LIBRARY STRING						{ $$ = $1; }
+library		:	LIBRARY STRING						{ $$ = $2; $2.freeValue(); }
 			;	
-material	:	MATERIAL STRING						{ data.setMaterial($2); }
+material	:	MATERIAL STRING						{ data.setMaterial($2); $2.freeValue(); }
 			;
 
 /******************/		

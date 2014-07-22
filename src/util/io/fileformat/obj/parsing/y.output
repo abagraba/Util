@@ -1,0 +1,819 @@
+   0  $accept : end $end
+
+   1  end : file stmt
+
+   2  file :
+   3       | file stmt NL
+   4       | file exception
+
+   5  exception : VERTEX error NL
+   6            | TEXTURE error NL
+   7            | NORMAL error NL
+   8            | FACE error NL
+   9            | LIBRARY error NL
+  10            | MATERIAL error NL
+  11            | GROUP error NL
+  12            | error NL
+
+  13  stmt :
+  14       | definition
+  15       | element
+  16       | group
+  17       | library
+  18       | material
+
+  19  definition : vertex
+  20             | texture
+  21             | normal
+
+  22  vertex : VERTEX FLOAT FLOAT FLOAT
+  23         | VERTEX FLOAT FLOAT FLOAT FLOAT
+
+  24  texture : TEXTURE FLOAT FLOAT
+
+  25  normal : NORMAL FLOAT FLOAT FLOAT
+
+  26  element : point
+  27          | line
+  28          | face
+
+  29  point : POINT v
+
+  30  line : LINE vchain2
+
+  31  face : FACE vchain3
+  32       | FACE vtchain3
+  33       | FACE vnchain3
+  34       | FACE vtnchain3
+
+  35  object : OBJECT STRING
+
+  36  group : GROUP STRING
+
+  37  library : LIBRARY STRING
+
+  38  material : MATERIAL STRING
+
+  39  v : INT
+
+  40  vt : INT SLASH INT
+
+  41  vn : INT SLASH SLASH INT
+
+  42  vtn : INT SLASH INT SLASH INT
+
+  43  vchain2 : v v
+  44          | vchain2 v
+
+  45  vchain3 : v v v
+  46          | vchain3 v
+
+  47  vtchain3 : vt vt vt
+  48           | vtchain3 vt
+
+  49  vnchain3 : vn vn vn
+  50           | vnchain3 vn
+
+  51  vtnchain3 : vtn vtn vtn
+  52            | vtnchain3 vtn
+
+state 0
+	$accept : . end $end  (0)
+	file : .  (2)
+
+	.  reduce 2
+
+	end  goto 1
+	file  goto 2
+
+
+state 1
+	$accept : end . $end  (0)
+
+	$end  accept
+
+
+state 2
+	end : file . stmt  (1)
+	file : file . stmt NL  (3)
+	file : file . exception  (4)
+	stmt : .  (13)
+
+	error  shift 3
+	VERTEX  shift 4
+	TEXTURE  shift 5
+	NORMAL  shift 6
+	GROUP  shift 7
+	POINT  shift 8
+	LINE  shift 9
+	FACE  shift 10
+	MATERIAL  shift 11
+	LIBRARY  shift 12
+	$end  reduce 13
+	NL  reduce 13
+
+	stmt  goto 13
+	exception  goto 14
+	definition  goto 15
+	element  goto 16
+	group  goto 17
+	library  goto 18
+	material  goto 19
+	vertex  goto 20
+	texture  goto 21
+	normal  goto 22
+	point  goto 23
+	line  goto 24
+	face  goto 25
+
+
+state 3
+	exception : error . NL  (12)
+
+	NL  shift 26
+	.  error
+
+
+state 4
+	exception : VERTEX . error NL  (5)
+	vertex : VERTEX . FLOAT FLOAT FLOAT  (22)
+	vertex : VERTEX . FLOAT FLOAT FLOAT FLOAT  (23)
+
+	error  shift 27
+	FLOAT  shift 28
+	.  error
+
+
+state 5
+	exception : TEXTURE . error NL  (6)
+	texture : TEXTURE . FLOAT FLOAT  (24)
+
+	error  shift 29
+	FLOAT  shift 30
+	.  error
+
+
+state 6
+	exception : NORMAL . error NL  (7)
+	normal : NORMAL . FLOAT FLOAT FLOAT  (25)
+
+	error  shift 31
+	FLOAT  shift 32
+	.  error
+
+
+state 7
+	exception : GROUP . error NL  (11)
+	group : GROUP . STRING  (36)
+
+	error  shift 33
+	STRING  shift 34
+	.  error
+
+
+state 8
+	point : POINT . v  (29)
+
+	INT  shift 35
+	.  error
+
+	v  goto 36
+
+
+state 9
+	line : LINE . vchain2  (30)
+
+	INT  shift 35
+	.  error
+
+	v  goto 37
+	vchain2  goto 38
+
+
+state 10
+	exception : FACE . error NL  (8)
+	face : FACE . vchain3  (31)
+	face : FACE . vtchain3  (32)
+	face : FACE . vnchain3  (33)
+	face : FACE . vtnchain3  (34)
+
+	error  shift 39
+	INT  shift 40
+	.  error
+
+	v  goto 41
+	vchain3  goto 42
+	vtchain3  goto 43
+	vnchain3  goto 44
+	vtnchain3  goto 45
+	vt  goto 46
+	vn  goto 47
+	vtn  goto 48
+
+
+state 11
+	exception : MATERIAL . error NL  (10)
+	material : MATERIAL . STRING  (38)
+
+	error  shift 49
+	STRING  shift 50
+	.  error
+
+
+state 12
+	exception : LIBRARY . error NL  (9)
+	library : LIBRARY . STRING  (37)
+
+	error  shift 51
+	STRING  shift 52
+	.  error
+
+
+state 13
+	end : file stmt .  (1)
+	file : file stmt . NL  (3)
+
+	NL  shift 53
+	$end  reduce 1
+
+
+state 14
+	file : file exception .  (4)
+
+	.  reduce 4
+
+
+state 15
+	stmt : definition .  (14)
+
+	.  reduce 14
+
+
+state 16
+	stmt : element .  (15)
+
+	.  reduce 15
+
+
+state 17
+	stmt : group .  (16)
+
+	.  reduce 16
+
+
+state 18
+	stmt : library .  (17)
+
+	.  reduce 17
+
+
+state 19
+	stmt : material .  (18)
+
+	.  reduce 18
+
+
+state 20
+	definition : vertex .  (19)
+
+	.  reduce 19
+
+
+state 21
+	definition : texture .  (20)
+
+	.  reduce 20
+
+
+state 22
+	definition : normal .  (21)
+
+	.  reduce 21
+
+
+state 23
+	element : point .  (26)
+
+	.  reduce 26
+
+
+state 24
+	element : line .  (27)
+
+	.  reduce 27
+
+
+state 25
+	element : face .  (28)
+
+	.  reduce 28
+
+
+state 26
+	exception : error NL .  (12)
+
+	.  reduce 12
+
+
+state 27
+	exception : VERTEX error . NL  (5)
+
+	NL  shift 54
+	.  error
+
+
+state 28
+	vertex : VERTEX FLOAT . FLOAT FLOAT  (22)
+	vertex : VERTEX FLOAT . FLOAT FLOAT FLOAT  (23)
+
+	FLOAT  shift 55
+	.  error
+
+
+state 29
+	exception : TEXTURE error . NL  (6)
+
+	NL  shift 56
+	.  error
+
+
+state 30
+	texture : TEXTURE FLOAT . FLOAT  (24)
+
+	FLOAT  shift 57
+	.  error
+
+
+state 31
+	exception : NORMAL error . NL  (7)
+
+	NL  shift 58
+	.  error
+
+
+state 32
+	normal : NORMAL FLOAT . FLOAT FLOAT  (25)
+
+	FLOAT  shift 59
+	.  error
+
+
+state 33
+	exception : GROUP error . NL  (11)
+
+	NL  shift 60
+	.  error
+
+
+state 34
+	group : GROUP STRING .  (36)
+
+	.  reduce 36
+
+
+state 35
+	v : INT .  (39)
+
+	.  reduce 39
+
+
+state 36
+	point : POINT v .  (29)
+
+	.  reduce 29
+
+
+state 37
+	vchain2 : v . v  (43)
+
+	INT  shift 35
+	.  error
+
+	v  goto 61
+
+
+state 38
+	line : LINE vchain2 .  (30)
+	vchain2 : vchain2 . v  (44)
+
+	INT  shift 35
+	$end  reduce 30
+	NL  reduce 30
+
+	v  goto 62
+
+
+state 39
+	exception : FACE error . NL  (8)
+
+	NL  shift 63
+	.  error
+
+
+state 40
+	v : INT .  (39)
+	vt : INT . SLASH INT  (40)
+	vn : INT . SLASH SLASH INT  (41)
+	vtn : INT . SLASH INT SLASH INT  (42)
+
+	SLASH  shift 64
+	INT  reduce 39
+
+
+state 41
+	vchain3 : v . v v  (45)
+
+	INT  shift 35
+	.  error
+
+	v  goto 65
+
+
+state 42
+	face : FACE vchain3 .  (31)
+	vchain3 : vchain3 . v  (46)
+
+	INT  shift 35
+	$end  reduce 31
+	NL  reduce 31
+
+	v  goto 66
+
+
+state 43
+	face : FACE vtchain3 .  (32)
+	vtchain3 : vtchain3 . vt  (48)
+
+	INT  shift 67
+	$end  reduce 32
+	NL  reduce 32
+
+	vt  goto 68
+
+
+state 44
+	face : FACE vnchain3 .  (33)
+	vnchain3 : vnchain3 . vn  (50)
+
+	INT  shift 69
+	$end  reduce 33
+	NL  reduce 33
+
+	vn  goto 70
+
+
+state 45
+	face : FACE vtnchain3 .  (34)
+	vtnchain3 : vtnchain3 . vtn  (52)
+
+	INT  shift 71
+	$end  reduce 34
+	NL  reduce 34
+
+	vtn  goto 72
+
+
+state 46
+	vtchain3 : vt . vt vt  (47)
+
+	INT  shift 67
+	.  error
+
+	vt  goto 73
+
+
+state 47
+	vnchain3 : vn . vn vn  (49)
+
+	INT  shift 69
+	.  error
+
+	vn  goto 74
+
+
+state 48
+	vtnchain3 : vtn . vtn vtn  (51)
+
+	INT  shift 71
+	.  error
+
+	vtn  goto 75
+
+
+state 49
+	exception : MATERIAL error . NL  (10)
+
+	NL  shift 76
+	.  error
+
+
+state 50
+	material : MATERIAL STRING .  (38)
+
+	.  reduce 38
+
+
+state 51
+	exception : LIBRARY error . NL  (9)
+
+	NL  shift 77
+	.  error
+
+
+state 52
+	library : LIBRARY STRING .  (37)
+
+	.  reduce 37
+
+
+state 53
+	file : file stmt NL .  (3)
+
+	.  reduce 3
+
+
+state 54
+	exception : VERTEX error NL .  (5)
+
+	.  reduce 5
+
+
+state 55
+	vertex : VERTEX FLOAT FLOAT . FLOAT  (22)
+	vertex : VERTEX FLOAT FLOAT . FLOAT FLOAT  (23)
+
+	FLOAT  shift 78
+	.  error
+
+
+state 56
+	exception : TEXTURE error NL .  (6)
+
+	.  reduce 6
+
+
+state 57
+	texture : TEXTURE FLOAT FLOAT .  (24)
+
+	.  reduce 24
+
+
+state 58
+	exception : NORMAL error NL .  (7)
+
+	.  reduce 7
+
+
+state 59
+	normal : NORMAL FLOAT FLOAT . FLOAT  (25)
+
+	FLOAT  shift 79
+	.  error
+
+
+state 60
+	exception : GROUP error NL .  (11)
+
+	.  reduce 11
+
+
+state 61
+	vchain2 : v v .  (43)
+
+	.  reduce 43
+
+
+state 62
+	vchain2 : vchain2 v .  (44)
+
+	.  reduce 44
+
+
+state 63
+	exception : FACE error NL .  (8)
+
+	.  reduce 8
+
+
+state 64
+	vt : INT SLASH . INT  (40)
+	vn : INT SLASH . SLASH INT  (41)
+	vtn : INT SLASH . INT SLASH INT  (42)
+
+	SLASH  shift 80
+	INT  shift 81
+	.  error
+
+
+state 65
+	vchain3 : v v . v  (45)
+
+	INT  shift 35
+	.  error
+
+	v  goto 82
+
+
+state 66
+	vchain3 : vchain3 v .  (46)
+
+	.  reduce 46
+
+
+state 67
+	vt : INT . SLASH INT  (40)
+
+	SLASH  shift 83
+	.  error
+
+
+state 68
+	vtchain3 : vtchain3 vt .  (48)
+
+	.  reduce 48
+
+
+state 69
+	vn : INT . SLASH SLASH INT  (41)
+
+	SLASH  shift 84
+	.  error
+
+
+state 70
+	vnchain3 : vnchain3 vn .  (50)
+
+	.  reduce 50
+
+
+state 71
+	vtn : INT . SLASH INT SLASH INT  (42)
+
+	SLASH  shift 85
+	.  error
+
+
+state 72
+	vtnchain3 : vtnchain3 vtn .  (52)
+
+	.  reduce 52
+
+
+state 73
+	vtchain3 : vt vt . vt  (47)
+
+	INT  shift 67
+	.  error
+
+	vt  goto 86
+
+
+state 74
+	vnchain3 : vn vn . vn  (49)
+
+	INT  shift 69
+	.  error
+
+	vn  goto 87
+
+
+state 75
+	vtnchain3 : vtn vtn . vtn  (51)
+
+	INT  shift 71
+	.  error
+
+	vtn  goto 88
+
+
+state 76
+	exception : MATERIAL error NL .  (10)
+
+	.  reduce 10
+
+
+state 77
+	exception : LIBRARY error NL .  (9)
+
+	.  reduce 9
+
+
+state 78
+	vertex : VERTEX FLOAT FLOAT FLOAT .  (22)
+	vertex : VERTEX FLOAT FLOAT FLOAT . FLOAT  (23)
+
+	FLOAT  shift 89
+	$end  reduce 22
+	NL  reduce 22
+
+
+state 79
+	normal : NORMAL FLOAT FLOAT FLOAT .  (25)
+
+	.  reduce 25
+
+
+state 80
+	vn : INT SLASH SLASH . INT  (41)
+
+	INT  shift 90
+	.  error
+
+
+state 81
+	vt : INT SLASH INT .  (40)
+	vtn : INT SLASH INT . SLASH INT  (42)
+
+	SLASH  shift 91
+	INT  reduce 40
+
+
+state 82
+	vchain3 : v v v .  (45)
+
+	.  reduce 45
+
+
+state 83
+	vt : INT SLASH . INT  (40)
+
+	INT  shift 92
+	.  error
+
+
+state 84
+	vn : INT SLASH . SLASH INT  (41)
+
+	SLASH  shift 80
+	.  error
+
+
+state 85
+	vtn : INT SLASH . INT SLASH INT  (42)
+
+	INT  shift 93
+	.  error
+
+
+state 86
+	vtchain3 : vt vt vt .  (47)
+
+	.  reduce 47
+
+
+state 87
+	vnchain3 : vn vn vn .  (49)
+
+	.  reduce 49
+
+
+state 88
+	vtnchain3 : vtn vtn vtn .  (51)
+
+	.  reduce 51
+
+
+state 89
+	vertex : VERTEX FLOAT FLOAT FLOAT FLOAT .  (23)
+
+	.  reduce 23
+
+
+state 90
+	vn : INT SLASH SLASH INT .  (41)
+
+	.  reduce 41
+
+
+state 91
+	vtn : INT SLASH INT SLASH . INT  (42)
+
+	INT  shift 94
+	.  error
+
+
+state 92
+	vt : INT SLASH INT .  (40)
+
+	.  reduce 40
+
+
+state 93
+	vtn : INT SLASH INT . SLASH INT  (42)
+
+	SLASH  shift 91
+	.  error
+
+
+state 94
+	vtn : INT SLASH INT SLASH INT .  (42)
+
+	.  reduce 42
+
+
+Rules never reduced:
+	object : OBJECT STRING  (35)
+
+
+42 terminals, 26 nonterminals
+53 grammar rules, 95 states

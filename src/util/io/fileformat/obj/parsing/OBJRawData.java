@@ -4,47 +4,54 @@ import java.util.ArrayList;
 
 import util.io.fileformat.obj.Element;
 
-
-
 public class OBJRawData {
-	public final static boolean	log			= true;
+	public final static boolean log = true;
 
-	private ArrayList<float[]>	vertices	= new ArrayList<float[]>();
-	private ArrayList<float[]>	textures	= new ArrayList<float[]>();
-	private ArrayList<float[]>	normals		= new ArrayList<float[]>();
+	private ArrayList<float[]> vertices = new ArrayList<float[]>();
+	private ArrayList<float[]> textures = new ArrayList<float[]>();
+	private ArrayList<float[]> normals = new ArrayList<float[]>();
+	private ArrayList<float[]> parameters = new ArrayList<float[]>();
 
-	private ArrayList<Element>	elements	= new ArrayList<Element>();
+	private ArrayList<Element> elements = new ArrayList<Element>();
 
-	private ArrayList<String>	libraries	= new ArrayList<String>();
+	private ArrayList<String> libraries = new ArrayList<String>();
 
-	private String				object		= "_DEFAULT_";
-	private String				group		= "_DEFAULT_";
-	private String				material	= "_DEFAULT_";
+	private String object = "_DEFAULT_";
+	private String group = "_DEFAULT_";
+	private String material = "_DEFAULT_";
 
-	/**/
+	/**********/
 
 	public void addVertex(OBJValue x, OBJValue y, OBJValue z) {
-		vertices.add(new float[] { x.f, y.f, z.f, 1 });
-		logObject("Vertex", vertices.size());
-		logf("%-8.8f %-8.8f %-8.8f\n", x.f, y.f, z.f);
+		addVertex(x.f, y.f, z.f, 1);
 	}
 
 	public void addVertex(OBJValue x, OBJValue y, OBJValue z, OBJValue w) {
-		vertices.add(new float[] { x.f, y.f, z.f, w.f });
+		addVertex(x.f, y.f, z.f, w.f);
+	}
+
+	private void addVertex(float x, float y, float z, float w) {
+		vertices.add(new float[] { x, y, z, w });
 		logObject("Vertex", vertices.size());
-		logf("%-8.8f %-8.8f %-8.8f\n", x.f, y.f, z.f);
+		logf("%-8.8f %-8.8f %-8.8f %-8.8f\n", x, y, z, w);
+	}
+
+	public void addTexture(OBJValue u) {
+		addTexture(u.f, 0, 0);
 	}
 
 	public void addTexture(OBJValue u, OBJValue v) {
-		textures.add(new float[] { u.f, v.f, 0 });
-		logObject("Texture", textures.size());
-		logf("%-8.8f %-8.8f\n", u.f, v.f);
+		addTexture(u.f, v.f, 0);
 	}
 
 	public void addTexture(OBJValue u, OBJValue v, OBJValue w) {
-		textures.add(new float[] { u.f, v.f, w.f });
+		addTexture(u.f, v.f, w.f);
+	}
+
+	private void addTexture(float u, float v, float w) {
+		textures.add(new float[] { u, v, w });
 		logObject("Texture", textures.size());
-		logf("%-8.8f %-8.8f\n", u.f, v.f);
+		logf("%-8.8f %-8.8f %-8.8f\n", u, v, w);
 	}
 
 	public void addNormal(OBJValue x, OBJValue y, OBJValue z) {
@@ -53,16 +60,25 @@ public class OBJRawData {
 		logf("%-8.8f %-8.8f %-8.8f\n", x.f, y.f, z.f);
 	}
 
-	public void addElement(Element e) {
-		elements.add(e);
-		tab();
-		tab();
-		tab();
-		logObject("Element", elements.size());
-		logln(e.toString());
+	public void addParameter(OBJValue u) {
+		addParameter(u.f, 0, 1);
+	}
+	
+	public void addParameter(OBJValue u, OBJValue v) {
+		addParameter(u.f, v.f, 1);
+	}
+	
+	public void addParameter(OBJValue u, OBJValue v, OBJValue w) {
+		addParameter(u.f, v.f, w.f);
+	}
+	
+	private void addParameter(float u, float v, float w){
+		parameters.add(new float[] { u, v, w });
+		logObject("Parameter", parameters.size());
+		logf("%-8.8f %-8.8f %-8.8f\n", u, v, w);
 	}
 
-	/**/
+	/**********/
 
 	public void corruptVertex() {
 		vertices.add(null);
@@ -81,6 +97,23 @@ public class OBJRawData {
 		logObject("Normal", normals.size());
 		logln("CORRUPT");
 	}
+	
+	public void corruptParameter() {
+		parameters.add(null);
+		logObject("Parameter", parameters.size());
+		logln("CORRUPT");
+	}
+
+	/**********/
+
+	public void addElement(Element e) {
+		elements.add(e);
+		tab();
+		tab();
+		tab();
+		logObject("Element", elements.size());
+		logln(e.toString());
+	}
 
 	public void corruptElement() {
 		elements.add(null);
@@ -91,7 +124,7 @@ public class OBJRawData {
 		logln("CORRUPT");
 	}
 
-	/**/
+	/**********/
 
 	public void setObject(OBJValue name) {
 		object = name.s;
@@ -116,7 +149,7 @@ public class OBJRawData {
 		logObject("Loading Library", name.s);
 	}
 
-	/**/
+	/**********/
 
 	private void logObject(String name, String desc) {
 		logf("%-16s %s\n", name, desc);
@@ -141,6 +174,8 @@ public class OBJRawData {
 			System.out.printf(format, args);
 	}
 
+	/**********/
+
 	public int evaluateVertex(OBJValue val) {
 		if (val.i < 0)
 			return vertices.size() + 1 + val.i;
@@ -156,6 +191,11 @@ public class OBJRawData {
 	public int evaluateNormal(OBJValue val) {
 		if (val.i < 0)
 			return normals.size() + 1 + val.i;
+		return val.i;
+	}
+	public int evaluateParameter(OBJValue val) {
+		if (val.i < 0)
+			return parameters.size() + 1 + val.i;
 		return val.i;
 	}
 }

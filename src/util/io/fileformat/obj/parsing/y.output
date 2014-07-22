@@ -9,73 +9,152 @@
    5  exception : VERTEX error NL
    6            | TEXTURE error NL
    7            | NORMAL error NL
-   8            | FACE error NL
-   9            | LIBRARY error NL
-  10            | MATERIAL error NL
-  11            | GROUP error NL
-  12            | error NL
+   8            | PARAMETER error NL
+   9            | POINT error NL
+  10            | LINE error NL
+  11            | FACE error NL
+  12            | LIBRARY error NL
+  13            | MATERIAL error NL
+  14            | OBJECT error NL
+  15            | GROUP error NL
+  16            | error NL
 
-  13  stmt :
-  14       | definition
-  15       | element
-  16       | group
-  17       | library
-  18       | material
+  17  stmt :
+  18       | definition
+  19       | element
+  20       | grouping
+  21       | materials
 
-  19  definition : vertex
-  20             | texture
-  21             | normal
+  22  definition : vertex
+  23             | texture
+  24             | normal
+  25             | parameter
+  26             | cs
 
-  22  vertex : VERTEX FLOAT FLOAT FLOAT
-  23         | VERTEX FLOAT FLOAT FLOAT FLOAT
+  27  element : point
+  28          | line
+  29          | face
 
-  24  texture : TEXTURE FLOAT FLOAT
+  30  grouping : object
+  31           | group
 
-  25  normal : NORMAL FLOAT FLOAT FLOAT
+  32  materials : library
+  33            | material
 
-  26  element : point
-  27          | line
-  28          | face
+  34  vertex : VERTEX FLOAT FLOAT FLOAT
+  35         | VERTEX FLOAT FLOAT FLOAT FLOAT
 
-  29  point : POINT v
+  36  texture : TEXTURE FLOAT
+  37          | TEXTURE FLOAT FLOAT
+  38          | TEXTURE FLOAT FLOAT FLOAT
 
-  30  line : LINE vchain2
+  39  normal : NORMAL FLOAT FLOAT FLOAT
 
-  31  face : FACE vchain3
-  32       | FACE vtchain3
-  33       | FACE vnchain3
-  34       | FACE vtnchain3
+  40  parameter : PARAMETER FLOAT
+  41            | PARAMETER FLOAT FLOAT
+  42            | PARAMETER FLOAT FLOAT FLOAT
 
-  35  object : OBJECT STRING
+  43  point : POINT v
 
-  36  group : GROUP STRING
+  44  line : LINE vchain2
 
-  37  library : LIBRARY STRING
+  45  face : FACE vchain3
+  46       | FACE vtchain3
+  47       | FACE vnchain3
+  48       | FACE vtnchain3
 
-  38  material : MATERIAL STRING
+  49  cs : xcs END
 
-  39  v : INT
+  50  xcs : type
+  51      | xcs degree
+  52      | xcs basis
+  53      | xcs step
 
-  40  vt : INT SLASH INT
+  54  type : CSTYPE STRING
+  55       | CSTYPE STRING STRING
 
-  41  vn : INT SLASH SLASH INT
+  56  degree : DEGREE INT
+  57         | DEGREE INT INT
 
-  42  vtn : INT SLASH INT SLASH INT
+  58  basis : BASIS U intchain
+  59        | BASIS VERTEX intchain
 
-  43  vchain2 : v v
-  44          | vchain2 v
+  60  step : STEP INT
+  61       | STEP INT INT
 
-  45  vchain3 : v v v
-  46          | vchain3 v
+  62  curve : CURVE FLOAT FLOAT vchain
+  63        | CURVE2D pchain2
 
-  47  vtchain3 : vt vt vt
-  48           | vtchain3 vt
+  64  surface : SURFACE FLOAT FLOAT FLOAT FLOAT
 
-  49  vnchain3 : vn vn vn
-  50           | vnchain3 vn
+  65  object : OBJECT STRING
 
-  51  vtnchain3 : vtn vtn vtn
-  52            | vtnchain3 vtn
+  66  group : GROUP STRING
+
+  67  library : LIBRARY STRING
+
+  68  material : MATERIAL STRING
+
+  69  vertexChain : vchain
+  70              | vtchain
+  71              | vnchain
+  72              | vtnchain
+
+  73  vertexChain2 : vchain2
+  74               | vtchain2
+  75               | vnchain2
+  76               | vtnchain2
+
+  77  vertexChain3 : vchain3
+  78               | vtchain3
+  79               | vnchain3
+  80               | vtnchain3
+
+  81  v : INT
+
+  82  vchain : v
+  83         | v vchain
+
+  84  vchain2 : v vchain
+
+  85  vchain3 : v vchain2
+
+  86  vt : INT SLASH INT
+
+  87  vtchain : vt
+  88          | vt vtchain
+
+  89  vtchain2 : vt vtchain
+
+  90  vtchain3 : vt vtchain2
+
+  91  vn : INT SLASH SLASH INT
+
+  92  vnchain : vn
+  93          | vn vnchain
+
+  94  vnchain2 : vn vnchain
+
+  95  vnchain3 : vn vnchain2
+
+  96  vtn : INT SLASH INT SLASH INT
+
+  97  vtnchain : vtn
+  98           | vtn vtnchain
+
+  99  vtnchain2 : vtn vtnchain
+
+ 100  vtnchain3 : vtn vtnchain2
+
+ 101  p : INT
+
+ 102  pchain : p
+ 103         | p pchain
+
+ 104  pchain2 : p pchain
+
+ 105  intchain : INT
+ 106           | INT intchain
 
 state 0
 	$accept : . end $end  (0)
@@ -97,723 +176,1116 @@ state 2
 	end : file . stmt  (1)
 	file : file . stmt NL  (3)
 	file : file . exception  (4)
-	stmt : .  (13)
+	stmt : .  (17)
 
 	error  shift 3
 	VERTEX  shift 4
 	TEXTURE  shift 5
 	NORMAL  shift 6
-	GROUP  shift 7
-	POINT  shift 8
-	LINE  shift 9
-	FACE  shift 10
-	MATERIAL  shift 11
-	LIBRARY  shift 12
-	$end  reduce 13
-	NL  reduce 13
+	PARAMETER  shift 7
+	GROUP  shift 8
+	OBJECT  shift 9
+	CSTYPE  shift 10
+	POINT  shift 11
+	LINE  shift 12
+	FACE  shift 13
+	MATERIAL  shift 14
+	LIBRARY  shift 15
+	$end  reduce 17
+	NL  reduce 17
 
-	stmt  goto 13
-	exception  goto 14
-	definition  goto 15
-	element  goto 16
-	group  goto 17
-	library  goto 18
-	material  goto 19
-	vertex  goto 20
-	texture  goto 21
-	normal  goto 22
-	point  goto 23
-	line  goto 24
-	face  goto 25
+	stmt  goto 16
+	exception  goto 17
+	definition  goto 18
+	element  goto 19
+	grouping  goto 20
+	materials  goto 21
+	vertex  goto 22
+	texture  goto 23
+	normal  goto 24
+	parameter  goto 25
+	cs  goto 26
+	point  goto 27
+	line  goto 28
+	face  goto 29
+	object  goto 30
+	group  goto 31
+	library  goto 32
+	material  goto 33
+	xcs  goto 34
+	type  goto 35
 
 
 state 3
-	exception : error . NL  (12)
+	exception : error . NL  (16)
 
-	NL  shift 26
+	NL  shift 36
 	.  error
 
 
 state 4
 	exception : VERTEX . error NL  (5)
-	vertex : VERTEX . FLOAT FLOAT FLOAT  (22)
-	vertex : VERTEX . FLOAT FLOAT FLOAT FLOAT  (23)
+	vertex : VERTEX . FLOAT FLOAT FLOAT  (34)
+	vertex : VERTEX . FLOAT FLOAT FLOAT FLOAT  (35)
 
-	error  shift 27
-	FLOAT  shift 28
+	error  shift 37
+	FLOAT  shift 38
 	.  error
 
 
 state 5
 	exception : TEXTURE . error NL  (6)
-	texture : TEXTURE . FLOAT FLOAT  (24)
+	texture : TEXTURE . FLOAT  (36)
+	texture : TEXTURE . FLOAT FLOAT  (37)
+	texture : TEXTURE . FLOAT FLOAT FLOAT  (38)
 
-	error  shift 29
-	FLOAT  shift 30
+	error  shift 39
+	FLOAT  shift 40
 	.  error
 
 
 state 6
 	exception : NORMAL . error NL  (7)
-	normal : NORMAL . FLOAT FLOAT FLOAT  (25)
+	normal : NORMAL . FLOAT FLOAT FLOAT  (39)
 
-	error  shift 31
-	FLOAT  shift 32
+	error  shift 41
+	FLOAT  shift 42
 	.  error
 
 
 state 7
-	exception : GROUP . error NL  (11)
-	group : GROUP . STRING  (36)
+	exception : PARAMETER . error NL  (8)
+	parameter : PARAMETER . FLOAT  (40)
+	parameter : PARAMETER . FLOAT FLOAT  (41)
+	parameter : PARAMETER . FLOAT FLOAT FLOAT  (42)
 
-	error  shift 33
-	STRING  shift 34
+	error  shift 43
+	FLOAT  shift 44
 	.  error
 
 
 state 8
-	point : POINT . v  (29)
+	exception : GROUP . error NL  (15)
+	group : GROUP . STRING  (66)
 
-	INT  shift 35
+	error  shift 45
+	STRING  shift 46
 	.  error
-
-	v  goto 36
 
 
 state 9
-	line : LINE . vchain2  (30)
+	exception : OBJECT . error NL  (14)
+	object : OBJECT . STRING  (65)
 
-	INT  shift 35
+	error  shift 47
+	STRING  shift 48
 	.  error
-
-	v  goto 37
-	vchain2  goto 38
 
 
 state 10
-	exception : FACE . error NL  (8)
-	face : FACE . vchain3  (31)
-	face : FACE . vtchain3  (32)
-	face : FACE . vnchain3  (33)
-	face : FACE . vtnchain3  (34)
+	type : CSTYPE . STRING  (54)
+	type : CSTYPE . STRING STRING  (55)
 
-	error  shift 39
-	INT  shift 40
+	STRING  shift 49
 	.  error
-
-	v  goto 41
-	vchain3  goto 42
-	vtchain3  goto 43
-	vnchain3  goto 44
-	vtnchain3  goto 45
-	vt  goto 46
-	vn  goto 47
-	vtn  goto 48
 
 
 state 11
-	exception : MATERIAL . error NL  (10)
-	material : MATERIAL . STRING  (38)
+	exception : POINT . error NL  (9)
+	point : POINT . v  (43)
 
-	error  shift 49
-	STRING  shift 50
+	error  shift 50
+	INT  shift 51
 	.  error
+
+	v  goto 52
 
 
 state 12
-	exception : LIBRARY . error NL  (9)
-	library : LIBRARY . STRING  (37)
+	exception : LINE . error NL  (10)
+	line : LINE . vchain2  (44)
 
-	error  shift 51
-	STRING  shift 52
+	error  shift 53
+	INT  shift 51
 	.  error
+
+	v  goto 54
+	vchain2  goto 55
 
 
 state 13
-	end : file stmt .  (1)
-	file : file stmt . NL  (3)
+	exception : FACE . error NL  (11)
+	face : FACE . vchain3  (45)
+	face : FACE . vtchain3  (46)
+	face : FACE . vnchain3  (47)
+	face : FACE . vtnchain3  (48)
 
-	NL  shift 53
-	$end  reduce 1
+	error  shift 56
+	INT  shift 57
+	.  error
+
+	v  goto 58
+	vchain3  goto 59
+	vtchain3  goto 60
+	vnchain3  goto 61
+	vtnchain3  goto 62
+	vt  goto 63
+	vn  goto 64
+	vtn  goto 65
 
 
 state 14
+	exception : MATERIAL . error NL  (13)
+	material : MATERIAL . STRING  (68)
+
+	error  shift 66
+	STRING  shift 67
+	.  error
+
+
+state 15
+	exception : LIBRARY . error NL  (12)
+	library : LIBRARY . STRING  (67)
+
+	error  shift 68
+	STRING  shift 69
+	.  error
+
+
+state 16
+	end : file stmt .  (1)
+	file : file stmt . NL  (3)
+
+	NL  shift 70
+	$end  reduce 1
+
+
+state 17
 	file : file exception .  (4)
 
 	.  reduce 4
 
 
-state 15
-	stmt : definition .  (14)
-
-	.  reduce 14
-
-
-state 16
-	stmt : element .  (15)
-
-	.  reduce 15
-
-
-state 17
-	stmt : group .  (16)
-
-	.  reduce 16
-
-
 state 18
-	stmt : library .  (17)
-
-	.  reduce 17
-
-
-state 19
-	stmt : material .  (18)
+	stmt : definition .  (18)
 
 	.  reduce 18
 
 
-state 20
-	definition : vertex .  (19)
+state 19
+	stmt : element .  (19)
 
 	.  reduce 19
 
 
-state 21
-	definition : texture .  (20)
+state 20
+	stmt : grouping .  (20)
 
 	.  reduce 20
 
 
-state 22
-	definition : normal .  (21)
+state 21
+	stmt : materials .  (21)
 
 	.  reduce 21
 
 
-state 23
-	element : point .  (26)
+state 22
+	definition : vertex .  (22)
 
-	.  reduce 26
+	.  reduce 22
+
+
+state 23
+	definition : texture .  (23)
+
+	.  reduce 23
 
 
 state 24
-	element : line .  (27)
-
-	.  reduce 27
-
-
-state 25
-	element : face .  (28)
-
-	.  reduce 28
-
-
-state 26
-	exception : error NL .  (12)
-
-	.  reduce 12
-
-
-state 27
-	exception : VERTEX error . NL  (5)
-
-	NL  shift 54
-	.  error
-
-
-state 28
-	vertex : VERTEX FLOAT . FLOAT FLOAT  (22)
-	vertex : VERTEX FLOAT . FLOAT FLOAT FLOAT  (23)
-
-	FLOAT  shift 55
-	.  error
-
-
-state 29
-	exception : TEXTURE error . NL  (6)
-
-	NL  shift 56
-	.  error
-
-
-state 30
-	texture : TEXTURE FLOAT . FLOAT  (24)
-
-	FLOAT  shift 57
-	.  error
-
-
-state 31
-	exception : NORMAL error . NL  (7)
-
-	NL  shift 58
-	.  error
-
-
-state 32
-	normal : NORMAL FLOAT . FLOAT FLOAT  (25)
-
-	FLOAT  shift 59
-	.  error
-
-
-state 33
-	exception : GROUP error . NL  (11)
-
-	NL  shift 60
-	.  error
-
-
-state 34
-	group : GROUP STRING .  (36)
-
-	.  reduce 36
-
-
-state 35
-	v : INT .  (39)
-
-	.  reduce 39
-
-
-state 36
-	point : POINT v .  (29)
-
-	.  reduce 29
-
-
-state 37
-	vchain2 : v . v  (43)
-
-	INT  shift 35
-	.  error
-
-	v  goto 61
-
-
-state 38
-	line : LINE vchain2 .  (30)
-	vchain2 : vchain2 . v  (44)
-
-	INT  shift 35
-	$end  reduce 30
-	NL  reduce 30
-
-	v  goto 62
-
-
-state 39
-	exception : FACE error . NL  (8)
-
-	NL  shift 63
-	.  error
-
-
-state 40
-	v : INT .  (39)
-	vt : INT . SLASH INT  (40)
-	vn : INT . SLASH SLASH INT  (41)
-	vtn : INT . SLASH INT SLASH INT  (42)
-
-	SLASH  shift 64
-	INT  reduce 39
-
-
-state 41
-	vchain3 : v . v v  (45)
-
-	INT  shift 35
-	.  error
-
-	v  goto 65
-
-
-state 42
-	face : FACE vchain3 .  (31)
-	vchain3 : vchain3 . v  (46)
-
-	INT  shift 35
-	$end  reduce 31
-	NL  reduce 31
-
-	v  goto 66
-
-
-state 43
-	face : FACE vtchain3 .  (32)
-	vtchain3 : vtchain3 . vt  (48)
-
-	INT  shift 67
-	$end  reduce 32
-	NL  reduce 32
-
-	vt  goto 68
-
-
-state 44
-	face : FACE vnchain3 .  (33)
-	vnchain3 : vnchain3 . vn  (50)
-
-	INT  shift 69
-	$end  reduce 33
-	NL  reduce 33
-
-	vn  goto 70
-
-
-state 45
-	face : FACE vtnchain3 .  (34)
-	vtnchain3 : vtnchain3 . vtn  (52)
-
-	INT  shift 71
-	$end  reduce 34
-	NL  reduce 34
-
-	vtn  goto 72
-
-
-state 46
-	vtchain3 : vt . vt vt  (47)
-
-	INT  shift 67
-	.  error
-
-	vt  goto 73
-
-
-state 47
-	vnchain3 : vn . vn vn  (49)
-
-	INT  shift 69
-	.  error
-
-	vn  goto 74
-
-
-state 48
-	vtnchain3 : vtn . vtn vtn  (51)
-
-	INT  shift 71
-	.  error
-
-	vtn  goto 75
-
-
-state 49
-	exception : MATERIAL error . NL  (10)
-
-	NL  shift 76
-	.  error
-
-
-state 50
-	material : MATERIAL STRING .  (38)
-
-	.  reduce 38
-
-
-state 51
-	exception : LIBRARY error . NL  (9)
-
-	NL  shift 77
-	.  error
-
-
-state 52
-	library : LIBRARY STRING .  (37)
-
-	.  reduce 37
-
-
-state 53
-	file : file stmt NL .  (3)
-
-	.  reduce 3
-
-
-state 54
-	exception : VERTEX error NL .  (5)
-
-	.  reduce 5
-
-
-state 55
-	vertex : VERTEX FLOAT FLOAT . FLOAT  (22)
-	vertex : VERTEX FLOAT FLOAT . FLOAT FLOAT  (23)
-
-	FLOAT  shift 78
-	.  error
-
-
-state 56
-	exception : TEXTURE error NL .  (6)
-
-	.  reduce 6
-
-
-state 57
-	texture : TEXTURE FLOAT FLOAT .  (24)
+	definition : normal .  (24)
 
 	.  reduce 24
 
 
-state 58
-	exception : NORMAL error NL .  (7)
+state 25
+	definition : parameter .  (25)
 
-	.  reduce 7
+	.  reduce 25
 
 
-state 59
-	normal : NORMAL FLOAT FLOAT . FLOAT  (25)
+state 26
+	definition : cs .  (26)
+
+	.  reduce 26
+
+
+state 27
+	element : point .  (27)
+
+	.  reduce 27
+
+
+state 28
+	element : line .  (28)
+
+	.  reduce 28
+
+
+state 29
+	element : face .  (29)
+
+	.  reduce 29
+
+
+state 30
+	grouping : object .  (30)
+
+	.  reduce 30
+
+
+state 31
+	grouping : group .  (31)
+
+	.  reduce 31
+
+
+state 32
+	materials : library .  (32)
+
+	.  reduce 32
+
+
+state 33
+	materials : material .  (33)
+
+	.  reduce 33
+
+
+state 34
+	cs : xcs . END  (49)
+	xcs : xcs . degree  (51)
+	xcs : xcs . basis  (52)
+	xcs : xcs . step  (53)
+
+	DEGREE  shift 71
+	BASIS  shift 72
+	STEP  shift 73
+	END  shift 74
+	.  error
+
+	degree  goto 75
+	basis  goto 76
+	step  goto 77
+
+
+state 35
+	xcs : type .  (50)
+
+	.  reduce 50
+
+
+state 36
+	exception : error NL .  (16)
+
+	.  reduce 16
+
+
+state 37
+	exception : VERTEX error . NL  (5)
+
+	NL  shift 78
+	.  error
+
+
+state 38
+	vertex : VERTEX FLOAT . FLOAT FLOAT  (34)
+	vertex : VERTEX FLOAT . FLOAT FLOAT FLOAT  (35)
 
 	FLOAT  shift 79
 	.  error
 
 
-state 60
-	exception : GROUP error NL .  (11)
+state 39
+	exception : TEXTURE error . NL  (6)
 
-	.  reduce 11
+	NL  shift 80
+	.  error
 
 
-state 61
-	vchain2 : v v .  (43)
+state 40
+	texture : TEXTURE FLOAT .  (36)
+	texture : TEXTURE FLOAT . FLOAT  (37)
+	texture : TEXTURE FLOAT . FLOAT FLOAT  (38)
+
+	FLOAT  shift 81
+	$end  reduce 36
+	NL  reduce 36
+
+
+state 41
+	exception : NORMAL error . NL  (7)
+
+	NL  shift 82
+	.  error
+
+
+state 42
+	normal : NORMAL FLOAT . FLOAT FLOAT  (39)
+
+	FLOAT  shift 83
+	.  error
+
+
+state 43
+	exception : PARAMETER error . NL  (8)
+
+	NL  shift 84
+	.  error
+
+
+state 44
+	parameter : PARAMETER FLOAT .  (40)
+	parameter : PARAMETER FLOAT . FLOAT  (41)
+	parameter : PARAMETER FLOAT . FLOAT FLOAT  (42)
+
+	FLOAT  shift 85
+	$end  reduce 40
+	NL  reduce 40
+
+
+state 45
+	exception : GROUP error . NL  (15)
+
+	NL  shift 86
+	.  error
+
+
+state 46
+	group : GROUP STRING .  (66)
+
+	.  reduce 66
+
+
+state 47
+	exception : OBJECT error . NL  (14)
+
+	NL  shift 87
+	.  error
+
+
+state 48
+	object : OBJECT STRING .  (65)
+
+	.  reduce 65
+
+
+state 49
+	type : CSTYPE STRING .  (54)
+	type : CSTYPE STRING . STRING  (55)
+
+	STRING  shift 88
+	DEGREE  reduce 54
+	BASIS  reduce 54
+	STEP  reduce 54
+	END  reduce 54
+
+
+state 50
+	exception : POINT error . NL  (9)
+
+	NL  shift 89
+	.  error
+
+
+state 51
+	v : INT .  (81)
+
+	.  reduce 81
+
+
+state 52
+	point : POINT v .  (43)
 
 	.  reduce 43
 
 
-state 62
-	vchain2 : vchain2 v .  (44)
+state 53
+	exception : LINE error . NL  (10)
+
+	NL  shift 90
+	.  error
+
+
+state 54
+	vchain2 : v . vchain  (84)
+
+	INT  shift 51
+	.  error
+
+	v  goto 91
+	vchain  goto 92
+
+
+state 55
+	line : LINE vchain2 .  (44)
 
 	.  reduce 44
 
 
-state 63
-	exception : FACE error NL .  (8)
+state 56
+	exception : FACE error . NL  (11)
 
-	.  reduce 8
-
-
-state 64
-	vt : INT SLASH . INT  (40)
-	vn : INT SLASH . SLASH INT  (41)
-	vtn : INT SLASH . INT SLASH INT  (42)
-
-	SLASH  shift 80
-	INT  shift 81
+	NL  shift 93
 	.  error
 
 
-state 65
-	vchain3 : v v . v  (45)
+state 57
+	v : INT .  (81)
+	vt : INT . SLASH INT  (86)
+	vn : INT . SLASH SLASH INT  (91)
+	vtn : INT . SLASH INT SLASH INT  (96)
 
-	INT  shift 35
+	SLASH  shift 94
+	INT  reduce 81
+
+
+state 58
+	vchain3 : v . vchain2  (85)
+
+	INT  shift 51
 	.  error
 
-	v  goto 82
+	v  goto 54
+	vchain2  goto 95
 
 
-state 66
-	vchain3 : vchain3 v .  (46)
-
-	.  reduce 46
-
-
-state 67
-	vt : INT . SLASH INT  (40)
-
-	SLASH  shift 83
-	.  error
-
-
-state 68
-	vtchain3 : vtchain3 vt .  (48)
-
-	.  reduce 48
-
-
-state 69
-	vn : INT . SLASH SLASH INT  (41)
-
-	SLASH  shift 84
-	.  error
-
-
-state 70
-	vnchain3 : vnchain3 vn .  (50)
-
-	.  reduce 50
-
-
-state 71
-	vtn : INT . SLASH INT SLASH INT  (42)
-
-	SLASH  shift 85
-	.  error
-
-
-state 72
-	vtnchain3 : vtnchain3 vtn .  (52)
-
-	.  reduce 52
-
-
-state 73
-	vtchain3 : vt vt . vt  (47)
-
-	INT  shift 67
-	.  error
-
-	vt  goto 86
-
-
-state 74
-	vnchain3 : vn vn . vn  (49)
-
-	INT  shift 69
-	.  error
-
-	vn  goto 87
-
-
-state 75
-	vtnchain3 : vtn vtn . vtn  (51)
-
-	INT  shift 71
-	.  error
-
-	vtn  goto 88
-
-
-state 76
-	exception : MATERIAL error NL .  (10)
-
-	.  reduce 10
-
-
-state 77
-	exception : LIBRARY error NL .  (9)
-
-	.  reduce 9
-
-
-state 78
-	vertex : VERTEX FLOAT FLOAT FLOAT .  (22)
-	vertex : VERTEX FLOAT FLOAT FLOAT . FLOAT  (23)
-
-	FLOAT  shift 89
-	$end  reduce 22
-	NL  reduce 22
-
-
-state 79
-	normal : NORMAL FLOAT FLOAT FLOAT .  (25)
-
-	.  reduce 25
-
-
-state 80
-	vn : INT SLASH SLASH . INT  (41)
-
-	INT  shift 90
-	.  error
-
-
-state 81
-	vt : INT SLASH INT .  (40)
-	vtn : INT SLASH INT . SLASH INT  (42)
-
-	SLASH  shift 91
-	INT  reduce 40
-
-
-state 82
-	vchain3 : v v v .  (45)
+state 59
+	face : FACE vchain3 .  (45)
 
 	.  reduce 45
 
 
-state 83
-	vt : INT SLASH . INT  (40)
+state 60
+	face : FACE vtchain3 .  (46)
 
-	INT  shift 92
-	.  error
-
-
-state 84
-	vn : INT SLASH . SLASH INT  (41)
-
-	SLASH  shift 80
-	.  error
+	.  reduce 46
 
 
-state 85
-	vtn : INT SLASH . INT SLASH INT  (42)
-
-	INT  shift 93
-	.  error
-
-
-state 86
-	vtchain3 : vt vt vt .  (47)
+state 61
+	face : FACE vnchain3 .  (47)
 
 	.  reduce 47
 
 
-state 87
-	vnchain3 : vn vn vn .  (49)
+state 62
+	face : FACE vtnchain3 .  (48)
+
+	.  reduce 48
+
+
+state 63
+	vtchain3 : vt . vtchain2  (90)
+
+	INT  shift 96
+	.  error
+
+	vtchain2  goto 97
+	vt  goto 98
+
+
+state 64
+	vnchain3 : vn . vnchain2  (95)
+
+	INT  shift 99
+	.  error
+
+	vnchain2  goto 100
+	vn  goto 101
+
+
+state 65
+	vtnchain3 : vtn . vtnchain2  (100)
+
+	INT  shift 102
+	.  error
+
+	vtnchain2  goto 103
+	vtn  goto 104
+
+
+state 66
+	exception : MATERIAL error . NL  (13)
+
+	NL  shift 105
+	.  error
+
+
+state 67
+	material : MATERIAL STRING .  (68)
+
+	.  reduce 68
+
+
+state 68
+	exception : LIBRARY error . NL  (12)
+
+	NL  shift 106
+	.  error
+
+
+state 69
+	library : LIBRARY STRING .  (67)
+
+	.  reduce 67
+
+
+state 70
+	file : file stmt NL .  (3)
+
+	.  reduce 3
+
+
+state 71
+	degree : DEGREE . INT  (56)
+	degree : DEGREE . INT INT  (57)
+
+	INT  shift 107
+	.  error
+
+
+state 72
+	basis : BASIS . U intchain  (58)
+	basis : BASIS . VERTEX intchain  (59)
+
+	U  shift 108
+	VERTEX  shift 109
+	.  error
+
+
+state 73
+	step : STEP . INT  (60)
+	step : STEP . INT INT  (61)
+
+	INT  shift 110
+	.  error
+
+
+state 74
+	cs : xcs END .  (49)
 
 	.  reduce 49
 
 
-state 88
-	vtnchain3 : vtn vtn vtn .  (51)
+state 75
+	xcs : xcs degree .  (51)
 
 	.  reduce 51
 
 
-state 89
-	vertex : VERTEX FLOAT FLOAT FLOAT FLOAT .  (23)
+state 76
+	xcs : xcs basis .  (52)
 
-	.  reduce 23
+	.  reduce 52
+
+
+state 77
+	xcs : xcs step .  (53)
+
+	.  reduce 53
+
+
+state 78
+	exception : VERTEX error NL .  (5)
+
+	.  reduce 5
+
+
+state 79
+	vertex : VERTEX FLOAT FLOAT . FLOAT  (34)
+	vertex : VERTEX FLOAT FLOAT . FLOAT FLOAT  (35)
+
+	FLOAT  shift 111
+	.  error
+
+
+state 80
+	exception : TEXTURE error NL .  (6)
+
+	.  reduce 6
+
+
+state 81
+	texture : TEXTURE FLOAT FLOAT .  (37)
+	texture : TEXTURE FLOAT FLOAT . FLOAT  (38)
+
+	FLOAT  shift 112
+	$end  reduce 37
+	NL  reduce 37
+
+
+state 82
+	exception : NORMAL error NL .  (7)
+
+	.  reduce 7
+
+
+state 83
+	normal : NORMAL FLOAT FLOAT . FLOAT  (39)
+
+	FLOAT  shift 113
+	.  error
+
+
+state 84
+	exception : PARAMETER error NL .  (8)
+
+	.  reduce 8
+
+
+state 85
+	parameter : PARAMETER FLOAT FLOAT .  (41)
+	parameter : PARAMETER FLOAT FLOAT . FLOAT  (42)
+
+	FLOAT  shift 114
+	$end  reduce 41
+	NL  reduce 41
+
+
+state 86
+	exception : GROUP error NL .  (15)
+
+	.  reduce 15
+
+
+state 87
+	exception : OBJECT error NL .  (14)
+
+	.  reduce 14
+
+
+state 88
+	type : CSTYPE STRING STRING .  (55)
+
+	.  reduce 55
+
+
+state 89
+	exception : POINT error NL .  (9)
+
+	.  reduce 9
 
 
 state 90
-	vn : INT SLASH SLASH INT .  (41)
+	exception : LINE error NL .  (10)
 
-	.  reduce 41
+	.  reduce 10
 
 
 state 91
-	vtn : INT SLASH INT SLASH . INT  (42)
+	vchain : v .  (82)
+	vchain : v . vchain  (83)
 
-	INT  shift 94
-	.  error
+	INT  shift 51
+	$end  reduce 82
+	NL  reduce 82
+
+	v  goto 91
+	vchain  goto 115
 
 
 state 92
-	vt : INT SLASH INT .  (40)
+	vchain2 : v vchain .  (84)
 
-	.  reduce 40
+	.  reduce 84
 
 
 state 93
-	vtn : INT SLASH INT . SLASH INT  (42)
+	exception : FACE error NL .  (11)
 
-	SLASH  shift 91
-	.  error
+	.  reduce 11
 
 
 state 94
-	vtn : INT SLASH INT SLASH INT .  (42)
+	vt : INT SLASH . INT  (86)
+	vn : INT SLASH . SLASH INT  (91)
+	vtn : INT SLASH . INT SLASH INT  (96)
+
+	SLASH  shift 116
+	INT  shift 117
+	.  error
+
+
+state 95
+	vchain3 : v vchain2 .  (85)
+
+	.  reduce 85
+
+
+state 96
+	vt : INT . SLASH INT  (86)
+
+	SLASH  shift 118
+	.  error
+
+
+state 97
+	vtchain3 : vt vtchain2 .  (90)
+
+	.  reduce 90
+
+
+state 98
+	vtchain2 : vt . vtchain  (89)
+
+	INT  shift 96
+	.  error
+
+	vtchain  goto 119
+	vt  goto 120
+
+
+state 99
+	vn : INT . SLASH SLASH INT  (91)
+
+	SLASH  shift 121
+	.  error
+
+
+state 100
+	vnchain3 : vn vnchain2 .  (95)
+
+	.  reduce 95
+
+
+state 101
+	vnchain2 : vn . vnchain  (94)
+
+	INT  shift 99
+	.  error
+
+	vnchain  goto 122
+	vn  goto 123
+
+
+state 102
+	vtn : INT . SLASH INT SLASH INT  (96)
+
+	SLASH  shift 124
+	.  error
+
+
+state 103
+	vtnchain3 : vtn vtnchain2 .  (100)
+
+	.  reduce 100
+
+
+state 104
+	vtnchain2 : vtn . vtnchain  (99)
+
+	INT  shift 102
+	.  error
+
+	vtnchain  goto 125
+	vtn  goto 126
+
+
+state 105
+	exception : MATERIAL error NL .  (13)
+
+	.  reduce 13
+
+
+state 106
+	exception : LIBRARY error NL .  (12)
+
+	.  reduce 12
+
+
+state 107
+	degree : DEGREE INT .  (56)
+	degree : DEGREE INT . INT  (57)
+
+	INT  shift 127
+	DEGREE  reduce 56
+	BASIS  reduce 56
+	STEP  reduce 56
+	END  reduce 56
+
+
+state 108
+	basis : BASIS U . intchain  (58)
+
+	INT  shift 128
+	.  error
+
+	intchain  goto 129
+
+
+state 109
+	basis : BASIS VERTEX . intchain  (59)
+
+	INT  shift 128
+	.  error
+
+	intchain  goto 130
+
+
+state 110
+	step : STEP INT .  (60)
+	step : STEP INT . INT  (61)
+
+	INT  shift 131
+	DEGREE  reduce 60
+	BASIS  reduce 60
+	STEP  reduce 60
+	END  reduce 60
+
+
+state 111
+	vertex : VERTEX FLOAT FLOAT FLOAT .  (34)
+	vertex : VERTEX FLOAT FLOAT FLOAT . FLOAT  (35)
+
+	FLOAT  shift 132
+	$end  reduce 34
+	NL  reduce 34
+
+
+state 112
+	texture : TEXTURE FLOAT FLOAT FLOAT .  (38)
+
+	.  reduce 38
+
+
+state 113
+	normal : NORMAL FLOAT FLOAT FLOAT .  (39)
+
+	.  reduce 39
+
+
+state 114
+	parameter : PARAMETER FLOAT FLOAT FLOAT .  (42)
 
 	.  reduce 42
 
 
+state 115
+	vchain : v vchain .  (83)
+
+	.  reduce 83
+
+
+state 116
+	vn : INT SLASH SLASH . INT  (91)
+
+	INT  shift 133
+	.  error
+
+
+state 117
+	vt : INT SLASH INT .  (86)
+	vtn : INT SLASH INT . SLASH INT  (96)
+
+	SLASH  shift 134
+	INT  reduce 86
+
+
+state 118
+	vt : INT SLASH . INT  (86)
+
+	INT  shift 135
+	.  error
+
+
+state 119
+	vtchain2 : vt vtchain .  (89)
+
+	.  reduce 89
+
+
+state 120
+	vtchain : vt .  (87)
+	vtchain : vt . vtchain  (88)
+
+	INT  shift 96
+	$end  reduce 87
+	NL  reduce 87
+
+	vtchain  goto 136
+	vt  goto 120
+
+
+state 121
+	vn : INT SLASH . SLASH INT  (91)
+
+	SLASH  shift 116
+	.  error
+
+
+state 122
+	vnchain2 : vn vnchain .  (94)
+
+	.  reduce 94
+
+
+state 123
+	vnchain : vn .  (92)
+	vnchain : vn . vnchain  (93)
+
+	INT  shift 99
+	$end  reduce 92
+	NL  reduce 92
+
+	vnchain  goto 137
+	vn  goto 123
+
+
+state 124
+	vtn : INT SLASH . INT SLASH INT  (96)
+
+	INT  shift 138
+	.  error
+
+
+state 125
+	vtnchain2 : vtn vtnchain .  (99)
+
+	.  reduce 99
+
+
+state 126
+	vtnchain : vtn .  (97)
+	vtnchain : vtn . vtnchain  (98)
+
+	INT  shift 102
+	$end  reduce 97
+	NL  reduce 97
+
+	vtnchain  goto 139
+	vtn  goto 126
+
+
+state 127
+	degree : DEGREE INT INT .  (57)
+
+	.  reduce 57
+
+
+state 128
+	intchain : INT .  (105)
+	intchain : INT . intchain  (106)
+
+	INT  shift 128
+	DEGREE  reduce 105
+	BASIS  reduce 105
+	STEP  reduce 105
+	END  reduce 105
+
+	intchain  goto 140
+
+
+state 129
+	basis : BASIS U intchain .  (58)
+
+	.  reduce 58
+
+
+state 130
+	basis : BASIS VERTEX intchain .  (59)
+
+	.  reduce 59
+
+
+state 131
+	step : STEP INT INT .  (61)
+
+	.  reduce 61
+
+
+state 132
+	vertex : VERTEX FLOAT FLOAT FLOAT FLOAT .  (35)
+
+	.  reduce 35
+
+
+state 133
+	vn : INT SLASH SLASH INT .  (91)
+
+	.  reduce 91
+
+
+state 134
+	vtn : INT SLASH INT SLASH . INT  (96)
+
+	INT  shift 141
+	.  error
+
+
+state 135
+	vt : INT SLASH INT .  (86)
+
+	.  reduce 86
+
+
+state 136
+	vtchain : vt vtchain .  (88)
+
+	.  reduce 88
+
+
+state 137
+	vnchain : vn vnchain .  (93)
+
+	.  reduce 93
+
+
+state 138
+	vtn : INT SLASH INT . SLASH INT  (96)
+
+	SLASH  shift 134
+	.  error
+
+
+state 139
+	vtnchain : vtn vtnchain .  (98)
+
+	.  reduce 98
+
+
+state 140
+	intchain : INT intchain .  (106)
+
+	.  reduce 106
+
+
+state 141
+	vtn : INT SLASH INT SLASH INT .  (96)
+
+	.  reduce 96
+
+
 Rules never reduced:
-	object : OBJECT STRING  (35)
+	curve : CURVE FLOAT FLOAT vchain  (62)
+	curve : CURVE2D pchain2  (63)
+	surface : SURFACE FLOAT FLOAT FLOAT FLOAT  (64)
+	vertexChain : vchain  (69)
+	vertexChain : vtchain  (70)
+	vertexChain : vnchain  (71)
+	vertexChain : vtnchain  (72)
+	vertexChain2 : vchain2  (73)
+	vertexChain2 : vtchain2  (74)
+	vertexChain2 : vnchain2  (75)
+	vertexChain2 : vtnchain2  (76)
+	vertexChain3 : vchain3  (77)
+	vertexChain3 : vtchain3  (78)
+	vertexChain3 : vnchain3  (79)
+	vertexChain3 : vtnchain3  (80)
+	p : INT  (101)
+	pchain : p  (102)
+	pchain : p pchain  (103)
+	pchain2 : p pchain  (104)
 
 
-42 terminals, 26 nonterminals
-53 grammar rules, 95 states
+43 terminals, 51 nonterminals
+107 grammar rules, 142 states

@@ -32,6 +32,7 @@ INT				=	[+-]?[1-9][0-9]*
 FLOAT			=	[+-]?\d+\.[0-9]+
 STRING			=	[\.\w]+
 
+U				=	u
 VERTEX			=	v
 TEXTURE			=	vt
 NORMAL			=	vn
@@ -93,6 +94,7 @@ NL			=   (\r\n|[\n\r])
 	{INT}			{ yychar += yytext().length(); yyparser.yylval = OBJValue.newValue(Integer.parseInt(yytext())); return OBJParser.INT; }
 	{FLOAT}			{ yychar += yytext().length(); yyparser.yylval = OBJValue.newValue(Float.parseFloat(yytext())); return OBJParser.FLOAT; }
 
+	{U}				{ yychar += yytext().length(); return OBJParser.U; }
 	{VERTEX}		{ yychar += yytext().length(); return OBJParser.VERTEX; }
 	{TEXTURE}		{ yychar += yytext().length(); return OBJParser.TEXTURE; }
 	{NORMAL}		{ yychar += yytext().length(); return OBJParser.NORMAL; }

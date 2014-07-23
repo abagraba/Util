@@ -16,11 +16,15 @@ public class OBJValue {
 	public String s;
 	public IntArray ints;
 
+	public Object obj;
+
 	protected OBJValue() {
 	}
 
 	public void freeValue() {
+		s = null;
 		ints = null;
+		obj = null;
 		values.add(this);
 	}
 
@@ -48,6 +52,12 @@ public class OBJValue {
 			val.ints = new LIntArray(ints);
 		else
 			val.ints = new RIntArray(ints);
+		return val;
+	}
+
+	public static OBJValue newValue(Object obj) {
+		OBJValue val = getValue();
+		val.obj = obj;
 		return val;
 	}
 

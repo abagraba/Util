@@ -43,6 +43,7 @@ SMOOTH			=	s
 MERGE			=	mg
 OBJECT			=	o
 
+RAT				=	rat
 DEGREE			=	deg
 BASIS			=	bmat
 STEP			=	step
@@ -105,6 +106,7 @@ NL			=   (\r\n|[\n\r])
 	{MERGE}		    { yychar += yytext().length(); return OBJParser.MERGE; }
 	{OBJECT}		{ yychar += yytext().length(); return OBJParser.OBJECT; }
 
+	{RAT}			{ yychar += yytext().length(); return OBJParser.RAT; }
 	{DEGREE}		{ yychar += yytext().length(); return OBJParser.DEGREE; }
 	{BASIS}		    { yychar += yytext().length(); return OBJParser.BASIS; }
 	{STEP}		    { yychar += yytext().length(); return OBJParser.STEP; }

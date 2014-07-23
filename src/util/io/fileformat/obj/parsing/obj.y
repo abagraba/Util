@@ -29,6 +29,7 @@ import util.io.fileformat.obj.Element.Type;
 %token	MERGE		
 %token	OBJECT		
 
+%token	RAT		
 %token	DEGREE		
 %token	BASIS		
 %token	STEP		
@@ -147,28 +148,45 @@ cs				:	xcs END
 				;
 /***************/		
 xcs				:	type
-				|	xcs degree
-				|	xcs basis
-				|	xcs step
+				|	xcs csheader
+				;
+type			:	CSTYPE STRING						{ cs = new CurveSurface($2.s); $2.freeValue(); }
+				|	CSTYPE RAT STRING					{ cs = new CurveSurface($3.s); cs.setRational(true); $3.freeValue(); }
 				;
 /***************/		
-type			:	CSTYPE STRING						{  }
-				|	CSTYPE STRING STRING				{  }
+cheader			:	cdegree
+				|	basis
+				|	cstep
+				;		
+sheader			:	sdegree
+				|	basis
+				|	sstep
 				;
-degree			:	DEGREE INT							{  }				
-				|	DEGREE INT INT						{  }				
+cdegree			:	DEGREE INT							{ cs.setDegree($2, null); $2.freeValue(); }
 				;
-basis			:	BASIS U intchain 					{  }
-				|	BASIS VERTEX intchain				{  }
+sdegree			:	DEGREE INT INT						{ cs.setDegree($2, $3); $2.freeValue(); $3.freeValue(); }				
+				;
+basis			:	BASIS U intchain 					{ cd.setUMatrix($3); $3.freeValue(); }
+				|	BASIS VERTEX intchain				{ cd.setVMatrix($3); $3.freeValue(); }
 				; 
-step			:	STEP INT							{  }
-				|	STEP INT INT						{  }
+cstep			:	STEP INT							{ cs.setStep($2, null); $2.freeValue(); }
+				;
+sstep			:	STEP INT INT						{ cs.setStep($2, $3); $2.freeValue(); $3.freeValue(); }
 				;
 /***************/		
+csfreeform		:	curve
+				|	surface
+				;
 curve			:	CURVE FLOAT FLOAT vchain2			{  }
 				|	CURVE2D pchain2						{  }
 				;
-surface			:	SURFACE FLOAT FLOAT FLOAT FLOAT		{  }
+surface			:	SURFACE FLOAT FLOAT FLOAT FLOAT	vertexChain	{  }
+				;
+/***************/		
+csbody			:
+				;
+param			:	PARAM U pchain2
+				|	PARAM VERTEX pchain2
 				;
 /***************/		
 /*****Groups****/
@@ -187,20 +205,20 @@ material		:	MATERIAL STRING						{ data.setMaterial($2); $2.freeValue(); }
 /******************/		
 /*Number Arguments*/
 /******************/
-vertexChain		:	vchain
-				|	vtchain
-				|	vnchain
-				|	vtnchain
+vertexChain		:	vchain								{ $$ = $1; }
+				|	vtchain								{ $$ = $1; }								
+				|	vnchain								{ $$ = $1; }
+				|	vtnchain							{ $$ = $1; }
 				;
-vertexChain2	:	vchain2
-				|	vtchain2
-				|	vnchain2
-				|	vtnchain2
+vertexChain2	:	vchain2								{ $$ = $1; }
+				|	vtchain2							{ $$ = $1; }
+				|	vnchain2							{ $$ = $1; }
+				|	vtnchain2							{ $$ = $1; }
 				;
-vertexChain3	:	vchain3
-				|	vtchain3
-				|	vnchain3
-				|	vtnchain3
+vertexChain3	:	vchain3								{ $$ = $1; }
+				|	vtchain3							{ $$ = $1; }
+				|	vnchain3							{ $$ = $1; }
+				|	vtnchain3							{ $$ = $1; }
 				;
 /***************/
 v				:	INT									{ $$ = $1; $$.i = data.evaluateVertex($1); }
@@ -262,6 +280,7 @@ intchain		:	INT									{ $$ = $1; $$.ints = new LIntArray($1.i); }
 	private OBJLexer lexer;
 
 	private OBJRawData data = new OBJRawData();
+	private CurveSurface cs;
 	
 	private int yylex () {
 		int token = -1;

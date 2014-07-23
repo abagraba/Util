@@ -37,10 +37,10 @@ class OBJLexer {
   private static final String ZZ_CMAP_PACKED = 
     "\11\0\1\45\1\40\1\41\1\41\1\37\22\0\1\45\2\0\1\42"+
     "\7\0\1\1\1\0\1\1\1\5\1\43\1\3\1\2\1\31\7\2"+
-    "\7\0\32\6\1\0\1\44\2\0\1\34\1\0\1\23\1\22\1\24"+
-    "\1\20\1\21\1\27\1\14\1\33\1\32\1\36\1\6\1\26\1\16"+
-    "\1\12\1\17\1\13\1\6\1\30\1\15\1\11\1\7\1\10\1\35"+
-    "\1\6\1\25\1\6\12\0\1\41\44\0\1\6\12\0\1\6\4\0"+
+    "\7\0\32\6\1\0\1\44\2\0\1\34\1\0\1\21\1\24\1\25"+
+    "\1\22\1\23\1\30\1\14\1\33\1\32\1\36\1\6\1\27\1\16"+
+    "\1\12\1\17\1\13\1\6\1\20\1\15\1\11\1\7\1\10\1\35"+
+    "\1\6\1\26\1\6\12\0\1\41\44\0\1\6\12\0\1\6\4\0"+
     "\1\6\5\0\27\6\1\0\37\6\1\0\u01ca\6\4\0\14\6\16\0"+
     "\5\6\7\0\1\6\1\0\1\6\21\0\165\6\1\0\2\6\2\0"+
     "\4\6\10\0\1\6\1\0\3\6\1\0\1\6\1\0\24\6\1\0"+
@@ -141,18 +141,18 @@ class OBJLexer {
 
   private static final String ZZ_ACTION_PACKED_0 =
     "\2\0\2\1\1\2\2\3\1\4\1\5\1\3\1\6"+
-    "\1\7\1\10\1\3\1\11\4\3\1\12\1\13\1\3"+
+    "\1\7\1\10\1\3\1\11\5\3\1\12\1\13\1\3"+
     "\2\14\1\15\1\16\1\1\1\17\2\20\1\2\1\0"+
     "\2\3\1\21\1\22\1\23\4\3\1\24\3\3\1\25"+
-    "\14\3\2\26\1\0\1\27\11\3\1\30\1\3\1\31"+
-    "\5\3\1\32\1\3\1\33\1\3\1\27\2\3\1\34"+
-    "\1\35\1\36\1\37\1\3\1\40\3\3\1\41\1\3"+
-    "\1\42\3\3\1\43\2\3\1\44\3\3\1\45\1\46"+
-    "\1\47\2\3\1\50\2\3\1\51\1\3\1\52\7\3"+
-    "\1\53\1\54\1\55\1\3\1\56";
+    "\15\3\2\26\1\0\1\27\11\3\1\30\1\31\1\3"+
+    "\1\32\5\3\1\33\1\3\1\34\1\3\1\27\2\3"+
+    "\1\35\1\36\1\37\1\40\1\3\1\41\3\3\1\42"+
+    "\1\3\1\43\3\3\1\44\2\3\1\45\3\3\1\46"+
+    "\1\47\1\50\2\3\1\51\2\3\1\52\1\3\1\53"+
+    "\7\3\1\54\1\55\1\56\1\3\1\57";
 
   private static int [] zzUnpackAction() {
-    int [] result = new int[131];
+    int [] result = new int[134];
     int offset = 0;
     offset = zzUnpackAction(ZZ_ACTION_PACKED_0, offset, result);
     return result;
@@ -179,24 +179,24 @@ class OBJLexer {
   private static final String ZZ_ROWMAP_PACKED_0 =
     "\0\0\0\46\0\114\0\162\0\230\0\276\0\344\0\u010a"+
     "\0\u0130\0\u0156\0\u017c\0\344\0\u01a2\0\u01c8\0\344\0\u01ee"+
-    "\0\u0214\0\u023a\0\u0260\0\u0286\0\344\0\u02ac\0\u02d2\0\114"+
-    "\0\114\0\114\0\u02f8\0\114\0\u031e\0\114\0\u0344\0\u036a"+
-    "\0\u0390\0\u03b6\0\344\0\344\0\344\0\u03dc\0\u0402\0\u0428"+
-    "\0\u044e\0\344\0\u0474\0\u049a\0\u04c0\0\344\0\u04e6\0\u050c"+
+    "\0\u0214\0\u023a\0\u0260\0\u0286\0\u02ac\0\344\0\u02d2\0\u02f8"+
+    "\0\114\0\114\0\114\0\u031e\0\114\0\u0344\0\114\0\u036a"+
+    "\0\u0390\0\u03b6\0\u03dc\0\344\0\344\0\344\0\u0402\0\u0428"+
+    "\0\u044e\0\u0474\0\344\0\u049a\0\u04c0\0\u04e6\0\344\0\u050c"+
     "\0\u0532\0\u0558\0\u057e\0\u05a4\0\u05ca\0\u05f0\0\u0616\0\u063c"+
-    "\0\u0662\0\u0688\0\u06ae\0\114\0\u06d4\0\u0390\0\u06fa\0\u0720"+
-    "\0\u0746\0\u076c\0\u0792\0\u07b8\0\u07de\0\u0804\0\u082a\0\344"+
-    "\0\u0850\0\344\0\u0876\0\u089c\0\u08c2\0\u08e8\0\u090e\0\344"+
-    "\0\u0934\0\344\0\u095a\0\u06d4\0\u0980\0\u09a6\0\344\0\344"+
-    "\0\344\0\344\0\u09cc\0\344\0\u09f2\0\u0a18\0\u0a3e\0\344"+
-    "\0\u0a64\0\u0a8a\0\u0ab0\0\u0ad6\0\u0afc\0\344\0\u0b22\0\u0b48"+
-    "\0\344\0\u0b6e\0\u0b94\0\u0bba\0\344\0\344\0\344\0\u0be0"+
-    "\0\u0c06\0\344\0\u0c2c\0\u0c52\0\344\0\u0c78\0\344\0\u0c9e"+
-    "\0\u0cc4\0\u0cea\0\u0d10\0\u0d36\0\u0d5c\0\u0d82\0\344\0\344"+
-    "\0\344\0\u0da8\0\344";
+    "\0\u0662\0\u0688\0\u06ae\0\u06d4\0\u06fa\0\114\0\u0720\0\u03b6"+
+    "\0\u0746\0\u076c\0\u0792\0\u07b8\0\u07de\0\u0804\0\u082a\0\u0850"+
+    "\0\u0876\0\344\0\344\0\u089c\0\344\0\u08c2\0\u08e8\0\u090e"+
+    "\0\u0934\0\u095a\0\344\0\u0980\0\344\0\u09a6\0\u0720\0\u09cc"+
+    "\0\u09f2\0\344\0\344\0\344\0\344\0\u0a18\0\344\0\u0a3e"+
+    "\0\u0a64\0\u0a8a\0\344\0\u0ab0\0\u0ad6\0\u0afc\0\u0b22\0\u0b48"+
+    "\0\344\0\u0b6e\0\u0b94\0\344\0\u0bba\0\u0be0\0\u0c06\0\344"+
+    "\0\344\0\344\0\u0c2c\0\u0c52\0\344\0\u0c78\0\u0c9e\0\344"+
+    "\0\u0cc4\0\344\0\u0cea\0\u0d10\0\u0d36\0\u0d5c\0\u0d82\0\u0da8"+
+    "\0\u0dce\0\344\0\344\0\344\0\u0df4\0\344";
 
   private static int [] zzUnpackRowMap() {
-    int [] result = new int[131];
+    int [] result = new int[134];
     int offset = 0;
     offset = zzUnpackRowMap(ZZ_ROWMAP_PACKED_0, offset, result);
     return result;
@@ -220,62 +220,63 @@ class OBJLexer {
 
   private static final String ZZ_TRANS_PACKED_0 =
     "\1\3\1\4\1\5\2\6\2\7\1\10\1\11\1\12"+
-    "\1\7\1\13\1\14\1\15\1\16\1\17\1\20\1\21"+
-    "\1\22\1\7\1\23\1\7\1\24\1\25\1\7\1\5"+
-    "\1\7\1\26\3\7\1\27\1\30\1\0\1\31\1\32"+
-    "\1\33\40\34\1\35\1\36\1\0\4\34\50\0\1\37"+
-    "\2\40\24\0\1\37\16\0\2\5\1\6\1\41\23\7"+
-    "\1\5\5\7\11\0\3\6\1\41\23\7\1\6\5\7"+
-    "\11\0\35\7\11\0\13\7\1\42\21\7\11\0\7\7"+
-    "\1\43\1\44\1\45\23\7\11\0\26\7\1\46\6\7"+
-    "\11\0\21\7\1\47\13\7\11\0\5\7\1\50\1\7"+
-    "\1\51\1\7\1\52\10\7\1\53\6\7\1\54\3\7"+
-    "\11\0\7\7\1\55\2\7\1\56\22\7\11\0\17\7"+
-    "\1\57\12\7\1\60\2\7\11\0\10\7\1\61\24\7"+
-    "\11\0\14\7\1\62\2\7\1\63\15\7\11\0\5\7"+
-    "\1\64\1\7\1\65\3\7\1\66\1\7\1\67\14\7"+
-    "\1\70\2\7\11\0\15\7\1\71\17\7\11\0\15\7"+
-    "\1\72\17\7\47\0\1\30\44\0\1\73\1\74\45\0"+
-    "\1\36\7\0\2\37\1\40\1\75\23\0\1\37\16\0"+
-    "\3\40\1\75\23\0\1\40\16\0\2\76\25\7\1\76"+
-    "\5\7\11\0\17\7\1\77\15\7\11\0\21\7\1\100"+
-    "\6\7\1\101\4\7\11\0\26\7\1\102\6\7\11\0"+
-    "\26\7\1\103\6\7\11\0\17\7\1\104\15\7\11\0"+
-    "\26\7\1\105\6\7\11\0\21\7\1\106\13\7\11\0"+
-    "\24\7\1\107\10\7\11\0\12\7\1\110\22\7\11\0"+
-    "\30\7\1\111\4\7\11\0\16\7\1\112\16\7\11\0"+
-    "\21\7\1\113\13\7\11\0\6\7\1\114\26\7\11\0"+
-    "\26\7\1\115\6\7\11\0\17\7\1\116\15\7\11\0"+
-    "\7\7\1\117\25\7\11\0\10\7\1\120\24\7\11\0"+
-    "\30\7\1\121\4\7\11\0\16\7\1\122\16\7\11\0"+
-    "\24\7\1\123\10\7\47\0\1\74\7\0\2\124\25\0"+
-    "\1\124\16\0\14\7\1\125\20\7\11\0\22\7\1\126"+
-    "\12\7\11\0\14\7\1\127\20\7\11\0\14\7\1\130"+
-    "\20\7\11\0\25\7\1\131\7\7\11\0\11\7\1\132"+
-    "\10\7\1\133\12\7\11\0\6\7\1\134\26\7\11\0"+
-    "\16\7\1\135\16\7\11\0\24\7\1\136\10\7\11\0"+
-    "\10\7\1\137\24\7\11\0\7\7\1\140\25\7\11\0"+
-    "\17\7\1\141\15\7\11\0\6\7\1\142\26\7\11\0"+
-    "\22\7\1\143\12\7\11\0\23\7\1\144\11\7\11\0"+
-    "\10\7\1\145\24\7\11\0\17\7\1\146\15\7\11\0"+
-    "\7\7\1\147\25\7\11\0\17\7\1\150\15\7\11\0"+
-    "\31\7\1\151\3\7\11\0\15\7\1\152\17\7\11\0"+
-    "\30\7\1\153\4\7\11\0\7\7\1\154\25\7\11\0"+
-    "\24\7\1\155\10\7\11\0\27\7\1\156\5\7\11\0"+
-    "\31\7\1\157\3\7\11\0\11\7\1\160\23\7\11\0"+
-    "\7\7\1\161\25\7\11\0\24\7\1\162\10\7\11\0"+
-    "\32\7\1\163\2\7\11\0\33\7\1\164\1\7\11\0"+
-    "\20\7\1\165\14\7\11\0\17\7\1\166\15\7\11\0"+
-    "\17\7\1\167\15\7\11\0\17\7\1\170\15\7\11\0"+
-    "\15\7\1\171\17\7\11\0\32\7\1\172\2\7\11\0"+
-    "\26\7\1\173\6\7\11\0\26\7\1\174\6\7\11\0"+
-    "\20\7\1\175\14\7\11\0\15\7\1\176\17\7\11\0"+
-    "\11\7\1\177\23\7\11\0\11\7\1\200\23\7\11\0"+
-    "\34\7\1\201\11\0\20\7\1\202\14\7\11\0\34\7"+
-    "\1\203\7\0";
+    "\1\7\1\13\1\14\1\15\1\16\1\17\1\20\1\7"+
+    "\1\21\1\22\1\23\1\24\1\7\1\25\1\26\1\5"+
+    "\1\7\1\27\3\7\1\30\1\31\1\0\1\32\1\33"+
+    "\1\34\40\35\1\36\1\37\1\0\4\35\50\0\1\40"+
+    "\2\41\24\0\1\40\16\0\2\5\1\6\1\42\23\7"+
+    "\1\5\5\7\11\0\3\6\1\42\23\7\1\6\5\7"+
+    "\11\0\35\7\11\0\13\7\1\43\21\7\11\0\7\7"+
+    "\1\44\1\45\1\46\23\7\11\0\16\7\1\47\16\7"+
+    "\11\0\17\7\1\50\15\7\11\0\5\7\1\51\1\7"+
+    "\1\52\1\7\1\53\11\7\1\54\5\7\1\55\3\7"+
+    "\11\0\7\7\1\56\2\7\1\57\22\7\11\0\17\7"+
+    "\1\60\15\7\11\0\21\7\1\61\10\7\1\62\2\7"+
+    "\11\0\10\7\1\63\24\7\11\0\14\7\1\64\4\7"+
+    "\1\65\13\7\11\0\5\7\1\66\1\7\1\67\3\7"+
+    "\1\70\1\7\1\71\14\7\1\72\2\7\11\0\15\7"+
+    "\1\73\17\7\11\0\15\7\1\74\17\7\47\0\1\31"+
+    "\44\0\1\75\1\76\45\0\1\37\7\0\2\40\1\41"+
+    "\1\77\23\0\1\40\16\0\3\41\1\77\23\0\1\41"+
+    "\16\0\2\100\25\7\1\100\5\7\11\0\21\7\1\101"+
+    "\13\7\11\0\17\7\1\102\10\7\1\103\4\7\11\0"+
+    "\16\7\1\104\16\7\11\0\16\7\1\105\16\7\11\0"+
+    "\21\7\1\106\13\7\11\0\16\7\1\107\16\7\11\0"+
+    "\17\7\1\110\15\7\11\0\25\7\1\111\7\7\11\0"+
+    "\7\7\1\112\25\7\11\0\12\7\1\113\22\7\11\0"+
+    "\30\7\1\114\4\7\11\0\20\7\1\115\14\7\11\0"+
+    "\17\7\1\116\15\7\11\0\6\7\1\117\26\7\11\0"+
+    "\16\7\1\120\16\7\11\0\21\7\1\121\13\7\11\0"+
+    "\7\7\1\122\25\7\11\0\10\7\1\123\24\7\11\0"+
+    "\30\7\1\124\4\7\11\0\20\7\1\125\14\7\11\0"+
+    "\25\7\1\126\7\7\47\0\1\76\7\0\2\127\25\0"+
+    "\1\127\16\0\14\7\1\130\20\7\11\0\23\7\1\131"+
+    "\11\7\11\0\14\7\1\132\20\7\11\0\14\7\1\133"+
+    "\20\7\11\0\26\7\1\134\6\7\11\0\11\7\1\135"+
+    "\11\7\1\136\11\7\11\0\6\7\1\137\26\7\11\0"+
+    "\20\7\1\140\14\7\11\0\25\7\1\141\7\7\11\0"+
+    "\10\7\1\142\24\7\11\0\7\7\1\143\25\7\11\0"+
+    "\21\7\1\144\13\7\11\0\6\7\1\145\26\7\11\0"+
+    "\23\7\1\146\11\7\11\0\24\7\1\147\10\7\11\0"+
+    "\10\7\1\150\24\7\11\0\21\7\1\151\13\7\11\0"+
+    "\7\7\1\152\25\7\11\0\21\7\1\153\13\7\11\0"+
+    "\31\7\1\154\3\7\11\0\15\7\1\155\17\7\11\0"+
+    "\30\7\1\156\4\7\11\0\7\7\1\157\25\7\11\0"+
+    "\25\7\1\160\7\7\11\0\27\7\1\161\5\7\11\0"+
+    "\31\7\1\162\3\7\11\0\11\7\1\163\23\7\11\0"+
+    "\7\7\1\164\25\7\11\0\25\7\1\165\7\7\11\0"+
+    "\32\7\1\166\2\7\11\0\33\7\1\167\1\7\11\0"+
+    "\22\7\1\170\12\7\11\0\21\7\1\171\13\7\11\0"+
+    "\21\7\1\172\13\7\11\0\21\7\1\173\13\7\11\0"+
+    "\15\7\1\174\17\7\11\0\32\7\1\175\2\7\11\0"+
+    "\16\7\1\176\16\7\11\0\16\7\1\177\16\7\11\0"+
+    "\22\7\1\200\12\7\11\0\15\7\1\201\17\7\11\0"+
+    "\11\7\1\202\23\7\11\0\11\7\1\203\23\7\11\0"+
+    "\34\7\1\204\11\0\22\7\1\205\12\7\11\0\34\7"+
+    "\1\206\7\0";
 
   private static int [] zzUnpackTrans() {
-    int [] result = new int[3534];
+    int [] result = new int[3610];
     int offset = 0;
     offset = zzUnpackTrans(ZZ_TRANS_PACKED_0, offset, result);
     return result;
@@ -313,11 +314,11 @@ class OBJLexer {
   private static final int [] ZZ_ATTRIBUTE = zzUnpackAttribute();
 
   private static final String ZZ_ATTRIBUTE_PACKED_0 =
-    "\2\0\1\11\24\1\3\11\1\1\1\11\1\1\1\11"+
-    "\1\1\1\0\33\1\1\11\1\0\106\1";
+    "\2\0\1\11\25\1\3\11\1\1\1\11\1\1\1\11"+
+    "\1\1\1\0\34\1\1\11\1\0\107\1";
 
   private static int [] zzUnpackAttribute() {
-    int [] result = new int[131];
+    int [] result = new int[134];
     int offset = 0;
     offset = zzUnpackAttribute(ZZ_ATTRIBUTE_PACKED_0, offset, result);
     return result;
@@ -716,187 +717,191 @@ class OBJLexer {
         case 1: 
           { System.err.println("Unexpected ["+ yytext() + "] at line " + line() + ":" + pos() + ".");
           }
-        case 47: break;
+        case 48: break;
         case 2: 
           { yychar += yytext().length(); yyparser.yylval = OBJValue.newValue(Integer.parseInt(yytext())); return OBJParser.INT;
           }
-        case 48: break;
+        case 49: break;
         case 3: 
           { yychar += yytext().length(); yyparser.yylval = OBJValue.newValue(yytext()); return OBJParser.STRING;
           }
-        case 49: break;
+        case 50: break;
         case 4: 
           { yychar += yytext().length(); return OBJParser.U;
           }
-        case 50: break;
+        case 51: break;
         case 5: 
           { yychar += yytext().length(); return OBJParser.VERTEX;
           }
-        case 51: break;
+        case 52: break;
         case 6: 
           { yychar += yytext().length(); return OBJParser.POINT;
           }
-        case 52: break;
+        case 53: break;
         case 7: 
           { yychar += yytext().length(); return OBJParser.GROUP;
           }
-        case 53: break;
+        case 54: break;
         case 8: 
           { yychar += yytext().length(); return OBJParser.SMOOTH;
           }
-        case 54: break;
+        case 55: break;
         case 9: 
           { yychar += yytext().length(); return OBJParser.OBJECT;
           }
-        case 55: break;
+        case 56: break;
         case 10: 
           { yychar += yytext().length(); return OBJParser.LINE;
           }
-        case 56: break;
+        case 57: break;
         case 11: 
           { yychar += yytext().length(); return OBJParser.FACE;
           }
-        case 57: break;
+        case 58: break;
         case 12: 
           { yyline++; yychar = 0; return OBJParser.NL;
           }
-        case 58: break;
+        case 59: break;
         case 13: 
           { yychar++; yybegin(COMMENT);
           }
-        case 59: break;
+        case 60: break;
         case 14: 
           { yychar++; return OBJParser.SLASH;
           }
-        case 60: break;
+        case 61: break;
         case 15: 
           { yychar++;
           }
-        case 61: break;
+        case 62: break;
         case 16: 
           { yyline++; yychar = 0; yybegin(YYINITIAL); return OBJParser.NL;
           }
-        case 62: break;
+        case 63: break;
         case 17: 
           { yychar += yytext().length(); return OBJParser.TEXTURE;
           }
-        case 63: break;
+        case 64: break;
         case 18: 
           { yychar += yytext().length(); return OBJParser.NORMAL;
           }
-        case 64: break;
+        case 65: break;
         case 19: 
           { yychar += yytext().length(); return OBJParser.PARAMETER;
           }
-        case 65: break;
+        case 66: break;
         case 20: 
           { yychar += yytext().length(); return OBJParser.SPECPOINT;
           }
-        case 66: break;
+        case 67: break;
         case 21: 
           { yychar += yytext().length(); return OBJParser.MERGE;
           }
-        case 67: break;
+        case 68: break;
         case 22: 
           { yyline++; yychar = 0;
           }
-        case 68: break;
+        case 69: break;
         case 23: 
           { yychar += yytext().length(); yyparser.yylval = OBJValue.newValue(Float.parseFloat(yytext())); return OBJParser.FLOAT;
           }
-        case 69: break;
-        case 24: 
-          { yychar += yytext().length(); return OBJParser.DEGREE;
-          }
         case 70: break;
-        case 25: 
-          { yychar += yytext().length(); return OBJParser.END;
+        case 24: 
+          { yychar += yytext().length(); return OBJParser.RAT;
           }
         case 71: break;
-        case 26: 
-          { yychar += yytext().length(); return OBJParser.CONNECT;
+        case 25: 
+          { yychar += yytext().length(); return OBJParser.DEGREE;
           }
         case 72: break;
-        case 27: 
-          { yychar += yytext().length(); return OBJParser.LOD;
+        case 26: 
+          { yychar += yytext().length(); return OBJParser.END;
           }
         case 73: break;
-        case 28: 
-          { yychar += yytext().length(); return OBJParser.TRIMOUT;
+        case 27: 
+          { yychar += yytext().length(); return OBJParser.CONNECT;
           }
         case 74: break;
-        case 29: 
-          { yychar += yytext().length(); return OBJParser.PARAM;
+        case 28: 
+          { yychar += yytext().length(); return OBJParser.LOD;
           }
         case 75: break;
-        case 30: 
-          { yychar += yytext().length(); return OBJParser.SURFACE;
+        case 29: 
+          { yychar += yytext().length(); return OBJParser.TRIMOUT;
           }
         case 76: break;
-        case 31: 
-          { yychar += yytext().length(); return OBJParser.STEP;
+        case 30: 
+          { yychar += yytext().length(); return OBJParser.PARAM;
           }
         case 77: break;
-        case 32: 
-          { yychar += yytext().length(); return OBJParser.SPECCURVE;
+        case 31: 
+          { yychar += yytext().length(); return OBJParser.SURFACE;
           }
         case 78: break;
-        case 33: 
-          { yychar += yytext().length(); return OBJParser.BASIS;
+        case 32: 
+          { yychar += yytext().length(); return OBJParser.STEP;
           }
         case 79: break;
-        case 34: 
-          { yychar += yytext().length(); return OBJParser.CURVE;
+        case 33: 
+          { yychar += yytext().length(); return OBJParser.SPECCURVE;
           }
         case 80: break;
-        case 35: 
-          { yychar += yytext().length(); return OBJParser.TRIMIN;
+        case 34: 
+          { yychar += yytext().length(); return OBJParser.BASIS;
           }
         case 81: break;
-        case 36: 
-          { yychar += yytext().length(); return OBJParser.SURFACEAPPROX;
+        case 35: 
+          { yychar += yytext().length(); return OBJParser.CURVE;
           }
         case 82: break;
-        case 37: 
-          { yychar += yytext().length(); return OBJParser.BEVEL;
+        case 36: 
+          { yychar += yytext().length(); return OBJParser.TRIMIN;
           }
         case 83: break;
-        case 38: 
-          { yychar += yytext().length(); return OBJParser.CURVE2D;
+        case 37: 
+          { yychar += yytext().length(); return OBJParser.SURFACEAPPROX;
           }
         case 84: break;
-        case 39: 
-          { yychar += yytext().length(); return OBJParser.CURVEAPPROX;
+        case 38: 
+          { yychar += yytext().length(); return OBJParser.BEVEL;
           }
         case 85: break;
-        case 40: 
-          { yychar += yytext().length(); return OBJParser.MATERIAL;
+        case 39: 
+          { yychar += yytext().length(); return OBJParser.CURVE2D;
           }
         case 86: break;
-        case 41: 
-          { yychar += yytext().length(); return OBJParser.LIBRARY;
+        case 40: 
+          { yychar += yytext().length(); return OBJParser.CURVEAPPROX;
           }
         case 87: break;
-        case 42: 
-          { yychar += yytext().length(); return OBJParser.CSTYPE;
+        case 41: 
+          { yychar += yytext().length(); return OBJParser.MATERIAL;
           }
         case 88: break;
-        case 43: 
-          { yychar += yytext().length(); return OBJParser.DINTER;
+        case 42: 
+          { yychar += yytext().length(); return OBJParser.LIBRARY;
           }
         case 89: break;
-        case 44: 
-          { yychar += yytext().length(); return OBJParser.CINTER;
+        case 43: 
+          { yychar += yytext().length(); return OBJParser.CSTYPE;
           }
         case 90: break;
-        case 45: 
-          { yychar += yytext().length(); return OBJParser.RAYTRACE;
+        case 44: 
+          { yychar += yytext().length(); return OBJParser.DINTER;
           }
         case 91: break;
-        case 46: 
-          { yychar += yytext().length(); return OBJParser.SHADOW;
+        case 45: 
+          { yychar += yytext().length(); return OBJParser.CINTER;
           }
         case 92: break;
+        case 46: 
+          { yychar += yytext().length(); return OBJParser.RAYTRACE;
+          }
+        case 93: break;
+        case 47: 
+          { yychar += yytext().length(); return OBJParser.SHADOW;
+          }
+        case 94: break;
         default: 
           if (zzInput == YYEOF && zzStartRead == zzCurrentPos) {
             zzAtEOF = true;

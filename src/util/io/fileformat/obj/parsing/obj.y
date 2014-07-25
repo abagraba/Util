@@ -132,9 +132,9 @@ parameter		:	PARAMETER FLOAT						{ data.addParameter($2); $2.freeValue(); }
 				|	PARAMETER FLOAT FLOAT				{ data.addParameter($2, $3); $2.freeValue(); $3.freeValue(); }
 				|	PARAMETER FLOAT FLOAT FLOAT			{ data.addParameter($2, $3, $4); $2.freeValue(); $3.freeValue(); $4.freeValue(); }
 				;
-/***************/		
-/*Element Stuff*/
-/***************/		
+/****************/		
+/*Basic Elements*/
+/****************/		
 point			:	POINT v								{ data.addElement(new Element(Type.POINT, new int[]{$2.i})); $2.freeValue(); }
 				;
 line			:	LINE vchain2						{ data.addElement(new Element(Type.LINE, $2.ints.toArray())); $2.freeValue(); }
@@ -144,8 +144,18 @@ face			:	FACE vchain3						{ data.addElement(new Element(Type.FACEV, $2.ints.toA
 				|	FACE vnchain3						{ data.addElement(new Element(Type.FACEVN, $2.ints.toArray())); $2.freeValue(); }
 				|	FACE vtnchain3						{ data.addElement(new Element(Type.FACEVTN, $2.ints.toArray())); $2.freeValue(); }
 				;
-cs				:	xcs END
+/************************/		
+/*Curve/Surface Elements*/
+/************************/		
+csdata			:	cstype								{ $$ = $1; }
+				|	cheader DEGREE INT					{ $$ = $1; (CurveSurfaceData)($$.obj).setDegree($3); }
+				|	sheader DEGREE INT INT				{ $$ = $1; (CurveSurfaceData)($$.obj).setDegree($3, $4); }
+				|	cheader BASIS U intchain			{ $$ = $1; (CurveSurfaceData)($$.obj).setUMatrix($4); }
+				|	cheader BASIS VERTEX intchain		{ $$ = $1; (CurveSurfaceData)($$.obj).setVMatrix($4); }
+				|	cheader STEP INT					{ $$ = $1; (CurveSurfaceData)($$.obj).setStep($3); }
+				|	sheader STEP INT INT				{ $$ = $1; (CurveSurfaceData)($$.obj).setStep($3, $4); }
 				;
+<<<<<<< HEAD
 /***************/		
 xcs				:	type
 				|	xcs csheader
@@ -187,6 +197,20 @@ csbody			:
 				;
 param			:	PARAM U pchain2
 				|	PARAM VERTEX pchain2
+=======
+cstype			:	CSTYPE STRING						{ $$ = $2; $$.obj = new CurveSurfaceData($2, false); }
+				|	CSTYPE RAT STRING					{ $$ = $3; $$.obj = new CurveSurfaceData($3, true); }
+				;
+/***************/
+cs				:	ffelement END
+				;
+/***************/
+ffelement		:	ffdecl
+				;
+ffdecl			:	CURVE FLOAT FLOAT vchain2			{  }
+				|	CURVE2D pchain2						{  }
+				|	SURFACE FLOAT FLOAT FLOAT FLOAT	vertexChain2	{  }
+>>>>>>> origin/master
 				;
 /***************/		
 /*****Groups****/
@@ -278,9 +302,12 @@ intchain		:	INT									{ $$ = $1; $$.ints = new LIntArray($1.i); }
 			
 	public static boolean debug = false;
 	private OBJLexer lexer;
-
 	private OBJRawData data = new OBJRawData();
+<<<<<<< HEAD
 	private CurveSurface cs;
+=======
+	private CurveSurfaceData csdata;
+>>>>>>> origin/master
 	
 	private int yylex () {
 		int token = -1;

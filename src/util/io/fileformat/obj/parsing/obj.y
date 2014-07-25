@@ -44,9 +44,9 @@ import util.io.fileformat.obj.Element.Type;
 %token	END			
 
 %token	PARAM		
-%token	TRIMOUT		
-%token	TRIMIN		
-%token	SPECCURVE	
+%token	TRIM	
+%token	HOLE		
+%token	SEQCURVE	
 %token	SPECPOINT	
 
 
@@ -155,49 +155,6 @@ csdata			:	cstype								{ $$ = $1; }
 				|	cheader STEP INT					{ $$ = $1; (CurveSurfaceData)($$.obj).setStep($3); }
 				|	sheader STEP INT INT				{ $$ = $1; (CurveSurfaceData)($$.obj).setStep($3, $4); }
 				;
-<<<<<<< HEAD
-/***************/		
-xcs				:	type
-				|	xcs csheader
-				;
-type			:	CSTYPE STRING						{ cs = new CurveSurface($2.s); $2.freeValue(); }
-				|	CSTYPE RAT STRING					{ cs = new CurveSurface($3.s); cs.setRational(true); $3.freeValue(); }
-				;
-/***************/		
-cheader			:	cdegree
-				|	basis
-				|	cstep
-				;		
-sheader			:	sdegree
-				|	basis
-				|	sstep
-				;
-cdegree			:	DEGREE INT							{ cs.setDegree($2, null); $2.freeValue(); }
-				;
-sdegree			:	DEGREE INT INT						{ cs.setDegree($2, $3); $2.freeValue(); $3.freeValue(); }				
-				;
-basis			:	BASIS U intchain 					{ cd.setUMatrix($3); $3.freeValue(); }
-				|	BASIS VERTEX intchain				{ cd.setVMatrix($3); $3.freeValue(); }
-				; 
-cstep			:	STEP INT							{ cs.setStep($2, null); $2.freeValue(); }
-				;
-sstep			:	STEP INT INT						{ cs.setStep($2, $3); $2.freeValue(); $3.freeValue(); }
-				;
-/***************/		
-csfreeform		:	curve
-				|	surface
-				;
-curve			:	CURVE FLOAT FLOAT vchain2			{  }
-				|	CURVE2D pchain2						{  }
-				;
-surface			:	SURFACE FLOAT FLOAT FLOAT FLOAT	vertexChain	{  }
-				;
-/***************/		
-csbody			:
-				;
-param			:	PARAM U pchain2
-				|	PARAM VERTEX pchain2
-=======
 cstype			:	CSTYPE STRING						{ $$ = $2; $$.obj = new CurveSurfaceData($2, false); }
 				|	CSTYPE RAT STRING					{ $$ = $3; $$.obj = new CurveSurfaceData($3, true); }
 				;
@@ -210,7 +167,27 @@ ffelement		:	ffdecl
 ffdecl			:	CURVE FLOAT FLOAT vchain2			{  }
 				|	CURVE2D pchain2						{  }
 				|	SURFACE FLOAT FLOAT FLOAT FLOAT	vertexChain2	{  }
->>>>>>> origin/master
+				;
+/***************/
+csbody			:	PARAM U pchain2
+				|	PARAM VERTEX pchain2
+				|	trim
+				|	hole
+				|	scrv
+				|	sp
+				;
+trim			:	TRIM curve
+				|	trim curve
+				;
+hole			:	HOLE curve
+				|	hole curve
+				;
+scrv			:	SCRV curve
+				|	scrv curve
+				;
+sp				:	SPECPOINT pchain
+				;
+curve			:	FLOAT FLOAT c
 				;
 /***************/		
 /*****Groups****/
@@ -303,11 +280,7 @@ intchain		:	INT									{ $$ = $1; $$.ints = new LIntArray($1.i); }
 	public static boolean debug = false;
 	private OBJLexer lexer;
 	private OBJRawData data = new OBJRawData();
-<<<<<<< HEAD
-	private CurveSurface cs;
-=======
 	private CurveSurfaceData csdata;
->>>>>>> origin/master
 	
 	private int yylex () {
 		int token = -1;

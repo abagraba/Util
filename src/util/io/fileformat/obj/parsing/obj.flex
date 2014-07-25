@@ -57,9 +57,9 @@ CURVE2D			=	curv2
 SURFACE			=	surf
 
 PARAM			=	parm
-TRIMOUT			=	trim
-TRIMIN			=	hole
-SPECCURVE		=	scrv
+TRIM			=	trim
+HOLE			=	hole
+SEQCURVE		=	scrv
 SPECPOINT		=	sp
 
 END				=	end
@@ -119,9 +119,9 @@ NL			=   (\r\n|[\n\r])
 	{CURVE2D}		{ yychar += yytext().length(); return OBJParser.CURVE2D; }
 	{SURFACE}		{ yychar += yytext().length(); return OBJParser.SURFACE; }
 	{PARAM}		    { yychar += yytext().length(); return OBJParser.PARAM; }
-	{TRIMOUT}		{ yychar += yytext().length(); return OBJParser.TRIMOUT; }
-	{TRIMIN}		{ yychar += yytext().length(); return OBJParser.TRIMIN; }
-	{SPECCURVE}	    { yychar += yytext().length(); return OBJParser.SPECCURVE; }
+	{TRIM}			{ yychar += yytext().length(); return OBJParser.TRIM; }
+	{HOLE}			{ yychar += yytext().length(); return OBJParser.HOLE; }
+	{SEQCURVE}	    { yychar += yytext().length(); return OBJParser.SEQCURVE; }
 	{SPECPOINT}	    { yychar += yytext().length(); return OBJParser.SPECPOINT; }
 
 	{END}			{ yychar += yytext().length(); return OBJParser.END; }

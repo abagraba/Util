@@ -6,8 +6,9 @@ import java.io.Reader;
 import util.IntArray;
 import util.LIntArray;
 
-import util.io.fileformat.obj.Element;
-import util.io.fileformat.obj.Element.Type;
+import util.io.fileformat.obj.elements.Element;
+import util.io.fileformat.obj.elements.ElementType;
+import util.io.fileformat.obj.parsing.CSData;
 %}
 
 %token	SLASH
@@ -41,12 +42,14 @@ import util.io.fileformat.obj.Element.Type;
 %token	CURVE		
 %token	CURVE2D		
 %token	SURFACE		
+
+%token	OFF			
 %token	END			
 
 %token	PARAM		
 %token	TRIM	
 %token	HOLE		
-%token	SEQCURVE	
+%token	SPECCURVE	
 %token	SPECPOINT	
 
 
@@ -112,6 +115,8 @@ element			:	point
 				;
 grouping		:	object
 				|	group
+				|	smoothGroup
+				|	mergeGroup
 				;
 materials		:	library
 				|	material
@@ -119,82 +124,89 @@ materials		:	library
 /*********************/
 /**Vertex Definitions*/
 /*********************/
-vertex			:	VERTEX FLOAT FLOAT FLOAT			{ data.addVertex($2, $3, $4); $2.freeValue(); $3.freeValue(); $4.freeValue(); }
-				|	VERTEX FLOAT FLOAT FLOAT FLOAT		{ data.addVertex($2, $3, $4, $5); $2.freeValue(); $3.freeValue(); $4.freeValue(); $5.freeValue(); }
+vertex			:	VERTEX FLOAT FLOAT FLOAT			{ data.addVertex($2, $3, $4); }
+				|	VERTEX FLOAT FLOAT FLOAT FLOAT		{ data.addVertex($2, $3, $4, $5); }
 				;
-texture			:	TEXTURE FLOAT						{ data.addTexture($2); $2.freeValue(); }
-				|	TEXTURE FLOAT FLOAT					{ data.addTexture($2, $3); $2.freeValue(); $3.freeValue(); }
-				|	TEXTURE FLOAT FLOAT FLOAT			{ data.addTexture($2, $3, $4); $2.freeValue(); $3.freeValue(); $4.freeValue(); }
+texture			:	TEXTURE FLOAT						{ data.addTexture($2); }
+				|	TEXTURE FLOAT FLOAT					{ data.addTexture($2, $3); }
+				|	TEXTURE FLOAT FLOAT FLOAT			{ data.addTexture($2, $3, $4); }
 				;
-normal			:	NORMAL FLOAT FLOAT FLOAT			{ data.addNormal($2, $3, $4); $2.freeValue(); $3.freeValue(); $4.freeValue(); }
+normal			:	NORMAL FLOAT FLOAT FLOAT			{ data.addNormal($2, $3, $4); }
 				;
-parameter		:	PARAMETER FLOAT						{ data.addParameter($2); $2.freeValue(); }
-				|	PARAMETER FLOAT FLOAT				{ data.addParameter($2, $3); $2.freeValue(); $3.freeValue(); }
-				|	PARAMETER FLOAT FLOAT FLOAT			{ data.addParameter($2, $3, $4); $2.freeValue(); $3.freeValue(); $4.freeValue(); }
+parameter		:	PARAMETER FLOAT						{ data.addParameter($2); }
+				|	PARAMETER FLOAT FLOAT				{ data.addParameter($2, $3); }
+				|	PARAMETER FLOAT FLOAT FLOAT			{ data.addParameter($2, $3, $4); }
 				;
-/****************/		
-/*Basic Elements*/
-/****************/		
-point			:	POINT v								{ data.addElement(new Element(Type.POINT, new int[]{$2.i})); $2.freeValue(); }
+/***************/		
+/***Elements****/
+/***************/		
+point			:	POINT v								{ data.addElement(new Element.Point(new int[]{$2.i})); $2.freeValue(); }
 				;
-line			:	LINE vchain2						{ data.addElement(new Element(Type.LINE, $2.ints.toArray())); $2.freeValue(); }
+line			:	LINE vchain2						{ data.addElement(new Element.Line($2.ints.toArray())); $2.freeValue(); }
 				;
-face			:	FACE vchain3						{ data.addElement(new Element(Type.FACEV, $2.ints.toArray())); $2.freeValue(); }
-				|	FACE vtchain3						{ data.addElement(new Element(Type.FACEVT, $2.ints.toArray())); $2.freeValue(); }
-				|	FACE vnchain3						{ data.addElement(new Element(Type.FACEVN, $2.ints.toArray())); $2.freeValue(); }
-				|	FACE vtnchain3						{ data.addElement(new Element(Type.FACEVTN, $2.ints.toArray())); $2.freeValue(); }
+face			:	FACE vchain3						{ data.addElement(new Element.Face($2.ints.toArray())); $2.freeValue(); }
+				|	FACE vtchain3						{ data.addElement(new Element.Face($2.ints.toArray())); $2.freeValue(); }
+				|	FACE vnchain3						{ data.addElement(new Element.Face($2.ints.toArray())); $2.freeValue(); }
+				|	FACE vtnchain3						{ data.addElement(new Element.Face($2.ints.toArray())); $2.freeValue(); }
 				;
 /************************/		
 /*Curve/Surface Elements*/
 /************************/		
-csdata			:	cstype								{ $$ = $1; }
-				|	cheader DEGREE INT					{ $$ = $1; (CurveSurfaceData)($$.obj).setDegree($3); }
-				|	sheader DEGREE INT INT				{ $$ = $1; (CurveSurfaceData)($$.obj).setDegree($3, $4); }
-				|	cheader BASIS U intchain			{ $$ = $1; (CurveSurfaceData)($$.obj).setUMatrix($4); }
-				|	cheader BASIS VERTEX intchain		{ $$ = $1; (CurveSurfaceData)($$.obj).setVMatrix($4); }
-				|	cheader STEP INT					{ $$ = $1; (CurveSurfaceData)($$.obj).setStep($3); }
-				|	sheader STEP INT INT				{ $$ = $1; (CurveSurfaceData)($$.obj).setStep($3, $4); }
+csdata			:	csType						{ $$ = $1; }
+				|	csdata DEGREE INT					{ $$ = $1; ((CSData)$$.obj).setDegree($3); }
+				|	csdata DEGREE INT INT				{ $$ = $1; ((CSData)$$.obj).setDegree($3, $4); }
+				|	csdata BASIS U intchain				{ $$ = $1; ((CSData)$$.obj).setUMatrix($4); }
+				|	csdata BASIS VERTEX intchain		{ $$ = $1; ((CSData)$$.obj).setVMatrix($4); }
+				|	csdata STEP INT						{ $$ = $1; ((CSData)$$.obj).setStep($3); }
+				|	csdata STEP INT INT					{ $$ = $1; ((CSData)$$.obj).setStep($3, $4); }
 				;
-cstype			:	CSTYPE STRING						{ $$ = $2; $$.obj = new CurveSurfaceData($2, false); }
-				|	CSTYPE RAT STRING					{ $$ = $3; $$.obj = new CurveSurfaceData($3, true); }
-				;
+csType			:	CSTYPE STRING				{ $$ = $2; $$.obj = new CSData($2, false); }
+				|	CSTYPE RAT STRING			{ $$ = $3; $$.obj = new CSData($3, true); }
+				
 /***************/
 cs				:	ffelement END
 				;
 /***************/
 ffelement		:	ffdecl
+				|	ffelement ffbody
 				;
-ffdecl			:	CURVE FLOAT FLOAT vchain2			{  }
-				|	CURVE2D pchain2						{  }
-				|	SURFACE FLOAT FLOAT FLOAT FLOAT	vertexChain2	{  }
+ffdecl			:	CURVE FLOAT FLOAT vchain2			{ $$ = $2; $$.obj = Element.Curve.makeCurve(csdata, $2.f, $3.f, $4.ints.toArray()); $3.freeValue(); $4.freeValue(); }
+				|	CURVE2D pchain2						{ $$ = $2; System.out.println("Curve2D needs implementation."); }
+				|	SURFACE FLOAT FLOAT FLOAT FLOAT	vertexChain2	{ $$ = $2; $$.obj = Element.Surface.makeSurface(csdata, $2.f, $3.f, $4.f, $5.f, $6.ints.toArray()); $3.freeValue(); $4.freeValue(); $5.freeValue(); $6.freeValue(); }
 				;
 /***************/
-csbody			:	PARAM U pchain2
+ffbody			:	PARAM U pchain2
 				|	PARAM VERTEX pchain2
 				|	trim
 				|	hole
 				|	scrv
 				|	sp
 				;
-trim			:	TRIM curve
-				|	trim curve
+trim			:	TRIM curve2d
+				|	trim curve2d
 				;
-hole			:	HOLE curve
-				|	hole curve
+hole			:	HOLE curve2d
+				|	hole curve2d
 				;
-scrv			:	SCRV curve
-				|	scrv curve
+scrv			:	SPECCURVE curve2d
+				|	scrv curve2d
 				;
 sp				:	SPECPOINT pchain
 				;
-curve			:	FLOAT FLOAT c
+curve2d			:	FLOAT FLOAT c
 				;
 /***************/		
 /*****Groups****/
 /***************/		
-object			:	OBJECT STRING						{ data.setObject($2); $2.freeValue(); }
+object			:	OBJECT STRING						{ data.setObject($2); }
 				;
-group			:	GROUP STRING						{ data.setGroup($2); $2.freeValue(); }
+group			:	GROUP STRING						{ data.setGroup($2); }
+				;
+smoothGroup		:	SMOOTH INT							{ data.setSmooth($2); }
+				|	SMOOTH OFF							{ data.setSmooth(null); }
+				;
+mergeGroup		:	MERGE INT FLOAT						{ data.setMerge($2, $3); }
+				|	MERGE OFF							{ data.setMerge(null, null); }
 				;
 /***************/		
 /***Materials***/
@@ -270,6 +282,11 @@ pchain			:	p									{ $$ = $1; $$.ints = new LIntArray($1.i); }
 pchain2			:	p pchain							{ $$ = $2; $$.ints.prepend($1.i); $1.freeValue(); }
 				;
 /***************/
+c				:	INT									{ 
+															//$$ = $1; $$.i = data.evaluateParameter($1); 
+														}
+				;
+/***************/
 intchain		:	INT									{ $$ = $1; $$.ints = new LIntArray($1.i); }
 				|	INT intchain						{ $$ = $2; $$.ints.prepend($1.i); $1.freeValue(); }
 				;
@@ -277,15 +294,18 @@ intchain		:	INT									{ $$ = $1; $$.ints = new LIntArray($1.i); }
 %%
 /******************/		
 			
-	public static boolean debug = false;
 	private OBJLexer lexer;
 	private OBJRawData data = new OBJRawData();
-	private CurveSurfaceData csdata;
+	private CSData csdata;
+	
+	private static boolean debug = false;
 	
 	private int yylex () {
 		int token = -1;
 		try {
 			token = lexer.yylex();
+			if (debug && token != -1)
+				System.out.println(yyname[token]);
 		}
 		catch (IOException e) {
 			System.err.println("IO error :"+e);

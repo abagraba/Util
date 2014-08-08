@@ -1,26 +1,25 @@
 package util;
 
-import java.awt.Point;
-
 /**
- * Object that stores an array of ints in a contiguous region of an int[]. Meant for quick and efficient data aggregation. Once this is constructed from an
- * array, the array should be considered invalid and never used again. Once toArray is called to extract the data, this object should not be used again as the
- * actions likely will not have effect on the array.
+ * Object that stores an array of ints in a contiguous region of an int[]. Meant for quick and efficient data
+ * aggregation. Once this is constructed from an array, the array should be considered invalid and never used again.
+ * Once toArray is called to extract the data, this object should not be used again as the actions likely will not have
+ * effect on the array.
  */
 public abstract class IntArray {
 
-	protected static final int DEFAULT_CAPACITY = 8;
+	protected static final int	DEFAULT_CAPACITY	= 8;
 
-	protected int[] data;
-	protected int size;
+	protected int[]				data;
+	protected int				size;
 
 	public IntArray() {
-		this.data = new int[DEFAULT_CAPACITY];
+		data = new int[DEFAULT_CAPACITY];
 	}
 
 	/**
-	 * Creates a new IntArray backed by the provided array. Modifying the array may render this IntArray invalid and vice-versa. Thus the provided array should
-	 * no longer be modified after being provided to this constructor.
+	 * Creates a new IntArray backed by the provided array. Modifying the array may render this IntArray invalid and
+	 * vice-versa. Thus the provided array should no longer be modified after being provided to this constructor.
 	 */
 	public IntArray(int... data) {
 		this.data = data;
@@ -36,7 +35,8 @@ public abstract class IntArray {
 	public abstract void prepend(int... ints);
 
 	/**
-	 * Gets the index of the first piece of data. The data will be in the range from [getDataStart(), getDataStart() + size - 1].
+	 * Gets the index of the first piece of data. The data will be in the range from [getDataStart(), getDataStart() +
+	 * size - 1].
 	 */
 	protected abstract int getDataStart();
 
@@ -82,7 +82,8 @@ public abstract class IntArray {
 	public abstract int[] toArray();
 
 	/**
-	 * Grows the backing array so that it can hold at least min elements. Does nothing if the backing array is already large enough.
+	 * Grows the backing array so that it can hold at least min elements. Does nothing if the backing array is already
+	 * large enough.
 	 */
 	protected abstract void growTo(int min);
 

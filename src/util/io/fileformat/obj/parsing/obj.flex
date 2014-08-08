@@ -59,9 +59,10 @@ SURFACE			=	surf
 PARAM			=	parm
 TRIM			=	trim
 HOLE			=	hole
-SEQCURVE		=	scrv
+SPECCURVE		=	scrv
 SPECPOINT		=	sp
 
+OFF				=	off
 END				=	end
 
 CONNECT			=	con
@@ -121,9 +122,10 @@ NL			=   (\r\n|[\n\r])
 	{PARAM}		    { yychar += yytext().length(); return OBJParser.PARAM; }
 	{TRIM}			{ yychar += yytext().length(); return OBJParser.TRIM; }
 	{HOLE}			{ yychar += yytext().length(); return OBJParser.HOLE; }
-	{SEQCURVE}	    { yychar += yytext().length(); return OBJParser.SEQCURVE; }
+	{SPECCURVE}	    { yychar += yytext().length(); return OBJParser.SPECCURVE; }
 	{SPECPOINT}	    { yychar += yytext().length(); return OBJParser.SPECPOINT; }
 
+	{OFF}			{ yychar += yytext().length(); return OBJParser.OFF; }
 	{END}			{ yychar += yytext().length(); return OBJParser.END; }
 	
 	{CONNECT}		{ yychar += yytext().length(); return OBJParser.CONNECT; }

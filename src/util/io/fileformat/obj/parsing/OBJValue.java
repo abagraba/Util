@@ -6,20 +6,21 @@ import util.IntArray;
 import util.LIntArray;
 import util.RIntArray;
 
+
+
 public class OBJValue {
 
-	private final static LinkedList<OBJValue> values = new LinkedList<OBJValue>();
+	private final static LinkedList<OBJValue>	values	= new LinkedList<OBJValue>();
 
-	public int i;
-	public float f;
+	public int									i;
+	public float								f;
 
-	public String s;
-	public IntArray ints;
+	public String								s;
+	public IntArray								ints;
 
-	public Object obj;
+	public Object								obj;
 
-	protected OBJValue() {
-	}
+	protected OBJValue() {}
 
 	public void freeValue() {
 		s = null;

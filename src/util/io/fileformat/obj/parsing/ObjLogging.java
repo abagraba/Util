@@ -4,8 +4,8 @@ public class ObjLogging {
 
 	public static int			VERTEX		= 0;
 	public static int			ELEMENT		= 1;
-	public static int			CSELEMENT	= 2;
-	public static int			MATERIAL	= 3;
+	public static int			MATERIAL	= 2;
+	public static int			GROUP		= 3;
 
 	public static String		int1		= "%d\n";
 	public static String		int2		= "%d %d\n";
@@ -16,7 +16,7 @@ public class ObjLogging {
 	public static String		float3		= "%-8.8f %-8.8f %-8.8f\n";
 	public static String		float4		= "%-8.8f %-8.8f %-8.8f %-8.8f\n";
 
-	private static boolean[]	loggable	= { true, true, true, true };
+	private static boolean[]	loggable	= { true, true, true, true, true };
 
 	private static boolean log(int type) {
 		if (type >= 0 && type < loggable.length)

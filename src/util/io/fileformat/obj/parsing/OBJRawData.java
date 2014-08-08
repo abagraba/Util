@@ -2,7 +2,7 @@ package util.io.fileformat.obj.parsing;
 
 import java.util.ArrayList;
 
-import util.io.fileformat.obj.Element;
+import util.io.fileformat.obj.elements.Element;
 
 
 
@@ -10,6 +10,7 @@ public class OBJRawData {
 	public final static int		VERTEX		= ObjLogging.VERTEX;
 	public final static int		ELEMENT		= ObjLogging.ELEMENT;
 	public final static int		MATERIAL	= ObjLogging.MATERIAL;
+	public final static int		GROUP		= ObjLogging.GROUP;
 
 	private ArrayList<float[]>	vertices	= new ArrayList<float[]>();
 	private ArrayList<float[]>	textures	= new ArrayList<float[]>();
@@ -20,18 +21,28 @@ public class OBJRawData {
 
 	private ArrayList<String>	libraries	= new ArrayList<String>();
 
-	private String				object		= "_DEFAULT_";
-	private String				group		= "_DEFAULT_";
-	private String				material	= "_DEFAULT_";
+	private String				object		= "default";
+	private String				group		= "default";
+	private int					smooth		= 0;
+	private int					merge		= 0;
+	private int					mergeres	= 0;
+	private String				material	= null;
 
 	/**********/
 
 	public void addVertex(OBJValue x, OBJValue y, OBJValue z) {
 		addVertex(x.f, y.f, z.f, 1);
+		x.freeValue();
+		y.freeValue();
+		z.freeValue();
 	}
 
 	public void addVertex(OBJValue x, OBJValue y, OBJValue z, OBJValue w) {
 		addVertex(x.f, y.f, z.f, w.f);
+		x.freeValue();
+		y.freeValue();
+		z.freeValue();
+		w.freeValue();
 	}
 
 	private void addVertex(float x, float y, float z, float w) {
@@ -42,14 +53,20 @@ public class OBJRawData {
 
 	public void addTexture(OBJValue u) {
 		addTexture(u.f, 0, 0);
+		u.freeValue();
 	}
 
 	public void addTexture(OBJValue u, OBJValue v) {
 		addTexture(u.f, v.f, 0);
+		u.freeValue();
+		v.freeValue();
 	}
 
 	public void addTexture(OBJValue u, OBJValue v, OBJValue w) {
 		addTexture(u.f, v.f, w.f);
+		u.freeValue();
+		v.freeValue();
+		w.freeValue();
 	}
 
 	private void addTexture(float u, float v, float w) {
@@ -62,18 +79,27 @@ public class OBJRawData {
 		normals.add(new float[] { x.f, y.f, z.f });
 		ObjLogging.logObject(VERTEX, "Normal", normals.size());
 		ObjLogging.logf(VERTEX, ObjLogging.float3, x.f, y.f, z.f);
+		x.freeValue();
+		y.freeValue();
+		z.freeValue();
 	}
 
 	public void addParameter(OBJValue u) {
 		addParameter(u.f, 0, 1);
+		u.freeValue();
 	}
 
 	public void addParameter(OBJValue u, OBJValue v) {
 		addParameter(u.f, v.f, 1);
+		u.freeValue();
+		v.freeValue();
 	}
 
 	public void addParameter(OBJValue u, OBJValue v, OBJValue w) {
 		addParameter(u.f, v.f, w.f);
+		u.freeValue();
+		v.freeValue();
+		w.freeValue();
 	}
 
 	private void addParameter(float u, float v, float w) {
@@ -132,13 +158,38 @@ public class OBJRawData {
 
 	public void setObject(OBJValue name) {
 		object = name.s;
-		ObjLogging.logObject(ELEMENT, "Object", object);
+		ObjLogging.logObject(GROUP, "Object", object);
+		name.freeValue();
 	}
 
 	public void setGroup(OBJValue name) {
 		group = name.s;
-		ObjLogging.tab(ELEMENT);
-		ObjLogging.logObject(ELEMENT, "Group", group);
+		ObjLogging.tab(GROUP);
+		ObjLogging.logObject(GROUP, "Group", group);
+		name.freeValue();
+	}
+
+	public void setSmooth(OBJValue name) {
+		smooth = name != null ? name.i : 0;
+		ObjLogging.tab(GROUP);
+		ObjLogging.logObject(GROUP, "Smooth Group", smooth);
+		ObjLogging.logln(GROUP, "");
+		if (name != null)
+			name.freeValue();
+	}
+
+	public void setMerge(OBJValue name, OBJValue res) {
+		merge = name != null ? name.i : 0;
+		mergeres = res != null ? res.i : 0;
+		ObjLogging.tab(GROUP);
+		ObjLogging.logObject(GROUP, "Merge Group", merge);
+		ObjLogging.logln(GROUP, "");
+		if (merge != 0 && mergeres <= 0)
+			ObjLogging.logln(GROUP, "Merge Group resolution must be > 0.");
+		if (name != null)
+			name.freeValue();
+		if (res != null)
+			res.freeValue();
 	}
 
 	public void setMaterial(OBJValue name) {

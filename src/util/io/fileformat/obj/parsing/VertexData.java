@@ -2,20 +2,21 @@ package util.io.fileformat.obj.parsing;
 
 import java.util.ArrayList;
 
+import util.LFloatArray;
 import util.io.fileformat.obj.elements.Element;
 
 
 
-public class OBJRawData {
+public class VertexData {
 	public final static int		VERTEX		= ObjLogging.VERTEX;
 	public final static int		ELEMENT		= ObjLogging.ELEMENT;
 	public final static int		MATERIAL	= ObjLogging.MATERIAL;
 	public final static int		GROUP		= ObjLogging.GROUP;
 
-	private ArrayList<float[]>	vertices	= new ArrayList<float[]>();
-	private ArrayList<float[]>	textures	= new ArrayList<float[]>();
-	private ArrayList<float[]>	normals		= new ArrayList<float[]>();
-	private ArrayList<float[]>	parameters	= new ArrayList<float[]>();
+	private LFloatArray			vertices	= new LFloatArray();
+	private LFloatArray			textures	= new LFloatArray();
+	private LFloatArray			normals		= new LFloatArray();
+	private LFloatArray			parameters	= new LFloatArray();
 
 	private ArrayList<Element>	elements	= new ArrayList<Element>();
 
@@ -46,7 +47,7 @@ public class OBJRawData {
 	}
 
 	private void addVertex(float x, float y, float z, float w) {
-		vertices.add(new float[] { x, y, z, w });
+		vertices.append(x, y, z, w);
 		ObjLogging.logObject(VERTEX, "Vertex", vertices.size());
 		ObjLogging.logf(VERTEX, ObjLogging.float4, x, y, z, w);
 	}
@@ -70,13 +71,13 @@ public class OBJRawData {
 	}
 
 	private void addTexture(float u, float v, float w) {
-		textures.add(new float[] { u, v, w });
+		textures.append(u, v, w, 1);
 		ObjLogging.logObject(VERTEX, "Texture", textures.size());
 		ObjLogging.logf(VERTEX, ObjLogging.float3, u, v, w);
 	}
 
 	public void addNormal(OBJValue x, OBJValue y, OBJValue z) {
-		normals.add(new float[] { x.f, y.f, z.f });
+		normals.append(x.f, y.f, z.f, 1);
 		ObjLogging.logObject(VERTEX, "Normal", normals.size());
 		ObjLogging.logf(VERTEX, ObjLogging.float3, x.f, y.f, z.f);
 		x.freeValue();
@@ -103,7 +104,7 @@ public class OBJRawData {
 	}
 
 	private void addParameter(float u, float v, float w) {
-		parameters.add(new float[] { u, v, w });
+		parameters.append(u, v, w, 1);
 		ObjLogging.logObject(VERTEX, "Parameter", parameters.size());
 		ObjLogging.logf(VERTEX, ObjLogging.float3, u, v, w);
 	}
@@ -111,25 +112,25 @@ public class OBJRawData {
 	/**********/
 
 	public void corruptVertex() {
-		vertices.add(null);
+		vertices.append(0, 0, 0, 1);
 		ObjLogging.logObject(VERTEX, "Vertex", vertices.size());
 		ObjLogging.logln(VERTEX, "CORRUPT");
 	}
 
 	public void corruptTexture() {
-		textures.add(null);
+		textures.append(0, 0, 0, 1);
 		ObjLogging.logObject(VERTEX, "Texture", textures.size());
 		ObjLogging.logln(VERTEX, "CORRUPT");
 	}
 
 	public void corruptNormal() {
-		normals.add(null);
+		normals.append(0, 0, 0, 1);
 		ObjLogging.logObject(VERTEX, "Normal", normals.size());
 		ObjLogging.logln(VERTEX, "CORRUPT");
 	}
 
 	public void corruptParameter() {
-		parameters.add(null);
+		parameters.append(0, 0, 0, 1);
 		ObjLogging.logObject(VERTEX, "Parameter", parameters.size());
 		ObjLogging.logln(VERTEX, "CORRUPT");
 	}
@@ -208,25 +209,25 @@ public class OBJRawData {
 
 	public int evaluateVertex(OBJValue val) {
 		if (val.i < 0)
-			return vertices.size() + 1 + val.i;
+			return vertices.size() >> 2 + 1 + val.i;
 		return val.i;
 	}
 
 	public int evaluateTexture(OBJValue val) {
 		if (val.i < 0)
-			return textures.size() + 1 + val.i;
+			return textures.size() >> 2 + 1 + val.i;
 		return val.i;
 	}
 
 	public int evaluateNormal(OBJValue val) {
 		if (val.i < 0)
-			return normals.size() + 1 + val.i;
+			return normals.size() >> 2 + 1 + val.i;
 		return val.i;
 	}
 
 	public int evaluateParameter(OBJValue val) {
 		if (val.i < 0)
-			return parameters.size() + 1 + val.i;
+			return parameters.size() >> 2 + 1 + val.i;
 		return val.i;
 	}
 }

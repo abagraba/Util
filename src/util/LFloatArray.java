@@ -1,56 +1,56 @@
 package util;
 
 /**
- * Left aligned IntArray. Appends are very fast while prepends are extremely slow.
+ * Left aligned FloatArray. Appends are very fast while prepends are extremely slow.
  */
-public class LIntArray extends IntArray {
+public class LFloatArray extends FloatArray {
 
-	public LIntArray() {}
+	public LFloatArray() {}
 
-	public LIntArray(int... data) {
+	public LFloatArray(float... data) {
 		super(data);
 	}
 
 	@Override
-	public void append(int i) {
+	public void append(float f) {
 		growTo(size + 1);
-		data[size++] = i;
+		data[size++] = f;
 	}
 
 	@Override
-	public void prepend(int i) {
-		int[] newData = newArray(size + 1);
-		newData[0] = i;
+	public void prepend(float f) {
+		float[] newData = newArray(size + 1);
+		newData[0] = f;
 		System.arraycopy(data, 0, newData, 1, size++);
 		data = newData;
 	}
 
 	@Override
-	public void append(int... ints) {
-		growTo(size + ints.length);
-		System.arraycopy(ints, 0, data, size, ints.length);
-		size += ints.length;
+	public void append(float... floats) {
+		growTo(size + floats.length);
+		System.arraycopy(floats, 0, data, size, floats.length);
+		size += floats.length;
 	}
 
 	@Override
-	public void prepend(int... ints) {
-		int[] newData = newArray(size + ints.length);
-		System.arraycopy(ints, 0, newData, 0, ints.length);
-		System.arraycopy(data, 0, newData, ints.length, size);
-		size += ints.length;
+	public void prepend(float... floats) {
+		float[] newData = newArray(size + floats.length);
+		System.arraycopy(floats, 0, newData, 0, floats.length);
+		System.arraycopy(data, 0, newData, floats.length, size);
+		size += floats.length;
 		data = newData;
 	}
 
 	@Override
-	public void append(IntArray array) {
+	public void append(FloatArray array) {
 		growTo(size + array.size);
 		System.arraycopy(array.data, array.getDataStart(), data, size, array.size);
 		size += array.size;
 	}
 
 	@Override
-	public void prepend(IntArray array) {
-		int[] newData = newArray(size + array.size);
+	public void prepend(FloatArray array) {
+		float[] newData = newArray(size + array.size);
 		System.arraycopy(array.data, array.getDataStart(), newData, 0, array.size);
 		System.arraycopy(data, 0, newData, array.size, size);
 		size += array.size;
@@ -58,25 +58,25 @@ public class LIntArray extends IntArray {
 	}
 
 	@Override
-	public void append(IntArray... arrays) {
+	public void append(FloatArray... arrays) {
 		int totalSize = size;
-		for (IntArray array : arrays)
+		for (FloatArray array : arrays)
 			totalSize += array.size;
 		growTo(totalSize);
-		for (IntArray array : arrays) {
+		for (FloatArray array : arrays) {
 			System.arraycopy(array.data, array.getDataStart(), data, size, array.size);
 			size += array.size;
 		}
 	}
 
 	@Override
-	public void prepend(IntArray... arrays) {
+	public void prepend(FloatArray... arrays) {
 		int totalSize = size;
-		for (IntArray array : arrays)
+		for (FloatArray array : arrays)
 			totalSize += array.size;
-		int[] newData = newArray(totalSize);
+		float[] newData = newArray(totalSize);
 		int i = 0;
-		for (IntArray array : arrays) {
+		for (FloatArray array : arrays) {
 			System.arraycopy(array.data, array.getDataStart(), newData, i, array.size);
 			i += array.size;
 		}
@@ -87,30 +87,30 @@ public class LIntArray extends IntArray {
 	}
 
 	@Override
-	public int removeFirst() {
-		int i = data[0];
-		int[] newData = newArray(size);
+	public float removeFirst() {
+		float i = data[0];
+		float[] newData = newArray(size);
 		System.arraycopy(data, 1, newData, 0, --size);
 		data = newData;
 		return i;
 	}
 
 	@Override
-	public int removeLast() {
+	public float removeLast() {
 		return data[size-- - 1];
 	}
 
 	@Override
 	protected void growTo(int min) {
 		if (shouldGrow(min)) {
-			int[] newData = newArray(min);
+			float[] newData = newArray(min);
 			System.arraycopy(data, 0, newData, 0, size);
 			data = newData;
 		}
 	}
 
 	@Override
-	public int[] toArray() {
+	public float[] toArray() {
 		trim();
 		return data;
 	}
@@ -118,7 +118,7 @@ public class LIntArray extends IntArray {
 	@Override
 	public void trim() {
 		if (data.length != size) {
-			int[] newData = new int[size];
+			float[] newData = new float[size];
 			System.arraycopy(data, 0, newData, 0, size);
 			data = newData;
 		}

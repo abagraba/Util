@@ -1,50 +1,50 @@
 package util;
 
 /**
- * Left aligned IntArray. Appends are very fast while prepends are extremely slow.
+ * Left aligned FloatArray. Appends are very fast while prepends are extremely slow.
  */
-public class RIntArray extends IntArray {
+public class RFloatArray extends FloatArray {
 
-	public RIntArray() {}
+	public RFloatArray() {}
 
-	public RIntArray(int... data) {
+	public RFloatArray(float... data) {
 		super(data);
 	}
 
 	@Override
-	public void append(int i) {
-		int[] newData = newArray(size + 1);
-		newData[newData.length - 1] = i;
+	public void append(float f) {
+		float[] newData = newArray(size + 1);
+		newData[newData.length - 1] = f;
 		System.arraycopy(data, getDataStart(), newData, getDataStart(newData) - 1, size++);
 		data = newData;
 	}
 
 	@Override
-	public void prepend(int i) {
+	public void prepend(float f) {
 		growTo(size + 1);
-		data[getDataStart() - 1] = i;
+		data[getDataStart() - 1] = f;
 		size++;
 	}
 
 	@Override
-	public void append(int... ints) {
-		int[] newData = newArray(size + ints.length);
-		System.arraycopy(ints, 0, newData, newData.length - ints.length, ints.length);
-		System.arraycopy(data, getDataStart(), newData, getDataStart(newData) - ints.length, size);
+	public void append(float... floats) {
+		float[] newData = newArray(size + floats.length);
+		System.arraycopy(floats, 0, newData, newData.length - floats.length, floats.length);
+		System.arraycopy(data, getDataStart(), newData, getDataStart(newData) - floats.length, size);
 		data = newData;
-		size += ints.length;
+		size += floats.length;
 	}
 
 	@Override
-	public void prepend(int... ints) {
-		growTo(size + ints.length);
-		System.arraycopy(ints, 0, data, getDataStart() - ints.length, ints.length);
-		size += ints.length;
+	public void prepend(float... floats) {
+		growTo(size + floats.length);
+		System.arraycopy(floats, 0, data, getDataStart() - floats.length, floats.length);
+		size += floats.length;
 	}
 
 	@Override
-	public void append(IntArray array) {
-		int[] newData = newArray(size + array.size);
+	public void append(FloatArray array) {
+		float[] newData = newArray(size + array.size);
 		System.arraycopy(array.data, array.getDataStart(), newData, newData.length - array.size, array.size);
 		System.arraycopy(data, getDataStart(), newData, getDataStart(newData) - array.size, size);
 		size += array.size;
@@ -52,22 +52,22 @@ public class RIntArray extends IntArray {
 	}
 
 	@Override
-	public void prepend(IntArray array) {
+	public void prepend(FloatArray array) {
 		growTo(size + array.size);
 		System.arraycopy(array.data, array.getDataStart(), data, getDataStart() - array.size, array.size);
 		size += array.size;
 	}
 
 	@Override
-	public void append(IntArray... arrays) {
+	public void append(FloatArray... arrays) {
 		int totalSize = size;
-		for (IntArray array : arrays)
+		for (FloatArray array : arrays)
 			totalSize += array.size;
-		int[] newData = newArray(totalSize);
+		float[] newData = newArray(totalSize);
 		int i = newData.length - totalSize;
 		System.arraycopy(data, getDataStart(), newData, i, size);
 		i += size;
-		for (IntArray array : arrays) {
+		for (FloatArray array : arrays) {
 			System.arraycopy(array.data, array.getDataStart(), newData, i, array.size);
 			i += array.size;
 		}
@@ -76,13 +76,13 @@ public class RIntArray extends IntArray {
 	}
 
 	@Override
-	public void prepend(IntArray... arrays) {
+	public void prepend(FloatArray... arrays) {
 		int totalSize = size;
-		for (IntArray array : arrays)
+		for (FloatArray array : arrays)
 			totalSize += array.size;
 		growTo(totalSize);
 		int i = data.length - totalSize;
-		for (IntArray array : arrays) {
+		for (FloatArray array : arrays) {
 			System.arraycopy(array.data, array.getDataStart(), data, i, array.size);
 			i += array.size;
 		}
@@ -90,14 +90,14 @@ public class RIntArray extends IntArray {
 	}
 
 	@Override
-	public int removeFirst() {
+	public float removeFirst() {
 		return data[data.length - size--];
 	}
 
 	@Override
-	public int removeLast() {
-		int i = data[data.length - 1];
-		int[] newData = newArray(size);
+	public float removeLast() {
+		float i = data[data.length - 1];
+		float[] newData = newArray(size);
 		System.arraycopy(data, getDataStart(), newData, getDataStart(newData) + 1, --size);
 		data = newData;
 		return i;
@@ -106,14 +106,14 @@ public class RIntArray extends IntArray {
 	@Override
 	protected void growTo(int min) {
 		if (shouldGrow(min)) {
-			int[] newData = newArray(min);
+			float[] newData = newArray(min);
 			System.arraycopy(data, getDataStart(), newData, getDataStart(newData), size);
 			data = newData;
 		}
 	}
 
 	@Override
-	public int[] toArray() {
+	public float[] toArray() {
 		trim();
 		return data;
 	}
@@ -121,7 +121,7 @@ public class RIntArray extends IntArray {
 	@Override
 	public void trim() {
 		if (data.length != size) {
-			int[] newData = new int[size];
+			float[] newData = new float[size];
 			System.arraycopy(data, getDataStart(), newData, 0, size);
 			data = newData;
 		}
@@ -132,7 +132,7 @@ public class RIntArray extends IntArray {
 		return data.length - size;
 	}
 
-	protected int getDataStart(int[] newData) {
+	protected int getDataStart(float[] newData) {
 		return newData.length - size;
 	}
 

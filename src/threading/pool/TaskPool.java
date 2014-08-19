@@ -1,6 +1,10 @@
-package threading;
+package threading.pool;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
+
+import threading.RunnerTask;
+import threading.Task;
+import threading.TaskRunner;
 
 public class TaskPool {
 
@@ -51,63 +55,16 @@ public class TaskPool {
 		RunnerTask poolTask = new RunnerTask(runner) {
 			@Override
 			public void task() {
-				System.out.println("Grabbing Task");
 				Task task = tasks.poll();
 				if (task == null) {
-					System.out.println("No tasks found. Sleeping.");
 					runner.pause();
 					inactiveThreads.add(runner);
-					System.out.println(inactiveThreads.size() + " sleeping threads.");
 				} else {
 					task.task();
 				}
 			}
 		};
 		return poolTask;
-	}
-
-	public static void main(String[] args) {
-		TaskPool pool = new TaskPool(testRunners(1));
-		long t = System.nanoTime();
-		int i = 0;
-		pool.addTask(new TestTask(i));
-	}
-
-	private static TaskRunner[] testRunners(int count) {
-		TaskRunner[] runners = new TaskRunner[count];
-		for (int i = 0; i < runners.length; i++) {
-			runners[i] = new TestRunner(i);
-		}
-		return runners;
-	}
-
-	private static class TestTask extends Task {
-		public int i;
-
-		public TestTask(int i) {
-			this.i = 0;
-		}
-
-		@Override
-		public void task() {
-			System.out.printf("Task # %d run.\n", i);
-		}
-
-		public String toString() {
-			return "" + i;
-		}
-	}
-
-	private static class TestRunner extends TaskRunner {
-		public int i;
-
-		public TestRunner(int i) {
-			this.i = 0;
-		}
-
-		public void runTask(Task task) {
-			System.out.printf("Runner #%d running task\n", i);
-		}
 	}
 
 }
